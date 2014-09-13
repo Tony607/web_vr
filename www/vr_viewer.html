@@ -1,0 +1,107 @@
+<html>
+  <head>
+    <title>MJPEG-Streamer</title>
+
+    <!-- refresh page after a few seconds, prevents hang-ups -->
+    <meta http-equiv="refresh" content="60" />
+  </head>
+
+<script language="javascript" type="text/javascript" src="/functions.js"></script>
+<script type="text/javascript">
+
+/*******************************************************************************
+  Copyright (C) 2009 Tom Stoeveken
+  This program is free software;
+  you can redistribute it and/or modify it under the terms of the
+  GNU General Public License, version 2.
+  See the file COPYING for details.
+*******************************************************************************/
+
+var img1 = null;
+var img2 = null;
+var canvas = null;
+
+/*
+  compare two images and count the differences
+
+  input.: image1 and image2 are Image() objects
+  input.: canvas is a Canvas() object to draw with
+  input.: threshold specifies by how much the color value of a pixel
+          must differ before they are regarded to be different
+
+  return: number of different pixels
+*/
+function drawVR(image1,canvas) {
+  var movement = 0;
+  var ctx = canvas.getContext("2d");
+  var width = canvas.width/2, height = canvas.height;
+
+  // copy images into canvas element
+  // these steps scale the images and decodes the image data
+  ctx.drawImage(image1, 0, 0, width, height);
+  ctx.drawImage(image1, width, 0, width, height);
+}
+
+/*
+  Callback function for completed picture downloads
+
+  With every new picture a compare() is performed.
+  The new picture is 'img1', the previous picture is stored in 'img2'.
+*/
+function newPictureComplete() {
+  // just compare if there are two pictures
+  if ( img2 != null ) {
+    var res = 0;
+
+    try {
+      // compare the two pictures, the given threshold helps to ignore noise
+      drawVR(img1, canvas);
+    }
+    catch(e) {
+      // errors can happen if the pictures were corrupted during transfer
+      // instead of giving up, just proceed
+    }
+  }
+
+  // copy reference of img1 to img2
+  img2 = img1;
+  img2.onload = null;
+  // load a new picture into img1
+  img1 = new Image();
+  img1.onload=newPictureComplete;
+
+  // load next picture in a few milliseconds
+  // the server blocks anyway until a fresh picture has arrived, so it can never be faster
+  // than the framerate. This timeout is intended to have the option
+  // to lower the required processing power at client side.
+  window.setTimeout("img1.src='/?action=snapshot&unique='+Math.random();", 1);
+}
+
+/*
+  Initialize the elements
+
+  * Create a Canvas() object and insert it into the page
+  * Download the first image
+  * Pause the Livestream again if we were paused previously
+    This way we will not pause, but we will lower the refresh rate
+    For a proper pause, the page can not be reloaded
+*/
+function run() {
+  canvas = document.createElement("canvas");
+  canvas.width = 960;
+  canvas.height = 540;
+  canvas.id = "comparison_canvas";
+  document.getElementById("vrview").appendChild(canvas);
+
+  img1 = new Image();
+  img1.onload=newPictureComplete;
+  img1.src = "/?action=snapshot";
+}
+
+
+
+</script>
+<body onload="run()">
+    <div id="vrview"></div>
+</body>
+</html>
