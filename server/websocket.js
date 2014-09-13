@@ -3,12 +3,42 @@ var clientdeviceorientation = {
 	beta: 0,
 	gamma:0,
 };
+var arduinoPort;
 var WebSocketServer = require('ws').Server
   , wss = new WebSocketServer({port: 8080});
 wss.on('connection', function(ws) {
     ws.on('message', function(message) {
         console.log(JSON.stringify(message, null, 4));
-    	//ws.send('something');
+    	if(arduinoPort && !arduinoPort.paused){
+    		console.log("writing to serialport...");
+    		arduinoPort.write("deviceOrientation");
+    	}
     });
     ws.send('something');
+});
+
+console.log("---Try to connect to serial port /dev/ttyATH0---");
+var serialport = require("serialport");
+var SerialPort = serialport.SerialPort; // localize object constructor
+arduinoPort = new SerialPort("/dev/ttyATH0", {
+		baudrate : 115200,
+		parser : serialport.parsers.readline("#")
+	});
+arduinoPort.on("open", function () {
+	console.log('arduinoPort->open');
+	//console.log(JSON.stringify(arduinoPort, null, 4));
+	/*arduinoPort.write("ls\n", function (err, results) {
+		console.log('err ' + err);
+		console.log('results ' + results);
+	});*/
+});
+
+arduinoPort.on('data', function (data) {
+	console.log("arduinoPort->data:",data.toString());
+});
+arduinoPort.on('close', function () {
+	console.log('arduinoPort->close');
+});
+arduinoPort.on('error', function () {
+	console.log('arduinoPort->error');
 });
