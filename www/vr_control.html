@@ -7,6 +7,7 @@
   </head>
 
 <script language="javascript" type="text/javascript" src="/functions.js"></script>
+<script language="javascript" type="text/javascript" src="/jquery.min.js"></script>
 <script type="text/javascript">
 
 /*******************************************************************************
@@ -20,7 +21,11 @@
 var img1 = null;
 var img2 = null;
 var canvas = null;
-
+var mydeviceorientation = {
+	alpha: 0,
+	beta: 0,
+	gamma:0,
+};
 /*
   compare two images and count the differences
 
@@ -76,7 +81,19 @@ function newPictureComplete() {
   // to lower the required processing power at client side.
   window.setTimeout("img1.src='/?action=snapshot&unique='+Math.random();", 1);
 }
-
+/*
+function connectSocket(){
+  var socket = io(); // TIP: io() with no args does auto-discovery
+  socket.on('connect', function () { // TIP: you can avoid listening on `connect` and listen on events directly too!
+  setInterval(function(){
+    console.log(“sending data to socketio server”);
+    socket.emit('tilt message', Math.random(), function (data) {
+	console.log(data);
+    });
+  }, 3000);
+    
+  });
+}*/
 /*
   Initialize the elements
 
@@ -87,17 +104,41 @@ function newPictureComplete() {
     For a proper pause, the page can not be reloaded
 */
 function run() {
-  canvas = document.createElement("canvas");
-  canvas.width = 960;
-  canvas.height = 540;
-  canvas.id = "comparison_canvas";
-  document.getElementById("vrview").appendChild(canvas);
+	//connectSocket();
+	canvas = document.createElement("canvas");
+	canvas.width = 960;
+	canvas.height = 540;
+	canvas.id = "comparison_canvas";
+	document.getElementById("vrview").appendChild(canvas);
 
-  img1 = new Image();
-  img1.onload=newPictureComplete;
-  img1.src = "/?action=snapshot";
+	img1 = new Image();
+	img1.onload=newPictureComplete;
+	img1.src = "/?action=snapshot";
+	var socketAddress="ws://"+window.location.hostname+":8080";
+	var msgSocket = new WebSocket(socketAddress);
+	msgSocket.onmessage = function (evt) { 
+		console.log(JSON.parse(event.data));
+	}
+  //msgSocket.send("Here's some text that the server is urgently awaiting!");
+  	setInterval(function () {
+  		console.log("Hello");
+  		
+  	}, 1000);
+	window.addEventListener('deviceorientation', function(event) {
+		mydeviceorientation.alpha = event.alpha;
+		mydeviceorientation.beta = event.beta;
+		mydeviceorientation.gamma = event.gamma;
+		//console.log(event.alpha + ' : ' + event.beta + ' : ' + event.gamma);
+		msgSocket.send(JSON.stringify(mydeviceorientation));
+	});
+  // websocket
+  /*var msgSocket = new WebSocket("ws://"+window.location.hostname+":8080");
+  setInterval(function(){
+    console.log(“sending data to socketio server”);
+    msgSocket.send("Here's some text that the server is urgently awaiting!");
+  }, 3000);*/
+  
 }
-
 
 </script>
 <body onload="run()">
