@@ -4,7 +4,7 @@ var clientdeviceorientation = {
 	gamma:0,
 };
 var arduinoPort;
-var serialportName = os.hostname()==="Arduino"?"ttyATH0":"ttyUSB0";
+var serialportName = require("os").hostname()==="Arduino"?"ttyATH0":"ttyUSB0";
 var WebSocketServer = require('ws').Server
   , wss = new WebSocketServer({port: 8080});
 wss.on('connection', function(ws) {
