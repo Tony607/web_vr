@@ -3,16 +3,23 @@ var clientdeviceorientation = {
 	beta: 0,
 	gamma:0,
 };
+function crateSerialPortData(orientation) {
+	var str = orientation.alpha.toFixed(1) +":"+
+	orientation.beta.toFixed(1) +":"+  
+	orientation.gamma.toFixed(1)+"#";
+	console.log(str);
+	return str;
+}
 var arduinoPort;
 var serialportName = require("os").hostname()==="Arduino"?"ttyATH0":"ttyUSB0";
 var WebSocketServer = require('ws').Server
   , wss = new WebSocketServer({port: 8080});
 wss.on('connection', function(ws) {
     ws.on('message', function(message) {
-        console.log(JSON.stringify(message, null, 4));
+        clientdeviceorientation = JSON.parse(message)
     	if(arduinoPort && !arduinoPort.paused){
     		console.log("writing to serialport...");
-    		arduinoPort.write("deviceOrientation");
+    		arduinoPort.write(crateSerialPortData(clientdeviceorientation));
     	}
     });
     ws.send('something');
