@@ -1,13 +1,26 @@
 <html>
   <head>
-    <title>MJPEG-Streamer</title>
-
+    <title>Cardboard Example</title>
     <!-- refresh page after a few seconds, prevents hang-ups -->
-    <meta http-equiv="refresh" content="60" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style>
+      body {
+        margin: 0px;
+        overflow: hidden;
+      }
+      #vrview {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+      }
+    </style>
+
   </head>
 
 <script language="javascript" type="text/javascript" src="/functions.js"></script>
-<script language="javascript" type="text/javascript" src="/jquery.min.js"></script>
 <script type="text/javascript">
 
 /*******************************************************************************
@@ -17,7 +30,7 @@
   GNU General Public License, version 2.
   See the file COPYING for details.
 *******************************************************************************/
-
+var container;
 var img1 = null;
 var img2 = null;
 var canvas = null;
@@ -81,19 +94,22 @@ function newPictureComplete() {
   // to lower the required processing power at client side.
   window.setTimeout("img1.src='/?action=snapshot&unique='+Math.random();", 1);
 }
-/*
-function connectSocket(){
-  var socket = io(); // TIP: io() with no args does auto-discovery
-  socket.on('connect', function () { // TIP: you can avoid listening on `connect` and listen on events directly too!
-  setInterval(function(){
-    console.log(“sending data to socketio server”);
-    socket.emit('tilt message', Math.random(), function (data) {
-	console.log(data);
-    });
-  }, 3000);
-    
-  });
-}*/
+
+function fullscreen() {
+	if (container.requestFullscreen) {
+		container.requestFullscreen();
+	} else if (container.msRequestFullscreen) {
+		container.msRequestFullscreen();
+	} else if (container.mozRequestFullScreen) {
+		container.mozRequestFullScreen();
+	} else if (container.webkitRequestFullscreen) {
+		container.webkitRequestFullscreen();
+	}
+}
+function resize() {
+	canvas.width = container.offsetWidth;
+	canvas.height = container.offsetHeight;
+}
 /*
   Initialize the elements
 
@@ -106,24 +122,26 @@ function connectSocket(){
 function run() {
 	//connectSocket();
 	canvas = document.createElement("canvas");
-	canvas.width = 960;
-	canvas.height = 540;
 	canvas.id = "comparison_canvas";
-	document.getElementById("vrview").appendChild(canvas);
-
+	container = document.getElementById("vrview")
+	canvas.width = container.offsetWidth;
+	canvas.height = container.offsetHeight;
+	container.appendChild(canvas);
+	window.addEventListener('resize', resize, false);
 	img1 = new Image();
 	img1.onload=newPictureComplete;
 	img1.src = "/?action=snapshot";
 	var socketAddress="ws://"+window.location.hostname+":8080";
 	var msgSocket = new WebSocket(socketAddress);
-	msgSocket.onmessage = function (evt) { 
-		console.log(JSON.parse(event.data));
+	msgSocket.onmessage = function (event) { 
+		console.log(event.data);
 	}
   //msgSocket.send("Here's some text that the server is urgently awaiting!");
   	setInterval(function () {
   		console.log("Hello");
   		
   	}, 1000);
+  	canvas.addEventListener('click', fullscreen, false);
 	window.addEventListener('deviceorientation', function(event) {
 		mydeviceorientation.alpha = event.alpha;
 		mydeviceorientation.beta = event.beta;
