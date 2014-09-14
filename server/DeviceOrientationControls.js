@@ -61,11 +61,6 @@ THREE.DeviceOrientationControls = function(object) {
     return 90 || 0;
   };
 
-  this.onScreenOrientationChangeEvent = (function() {
-
-    this.screenOrientation = 90;//landscape-primary
-
-  }).bind(this);
 
   this.update = function(rawEvtData) {
     this.deviceOrientation = rawEvtData;
