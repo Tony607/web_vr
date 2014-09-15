@@ -1,7 +1,7 @@
 var THREE = require("three");
 function OrientationProcessor( object ) {
 	var scope = this;
-
+	var radtoDeg = 180 / Math.PI;
 	this.object = object;
 
 	this.object.rotation.reorder( "YXZ" );
@@ -62,16 +62,23 @@ function OrientationProcessor( object ) {
 		var q = [1,0,0,0]; // quaternion[w,x,y,z]
 		var ypr = [0,0,0]; 
 		var gx, gy, gz; // estimated gravity direction
-		var q = [scope.object.quaternion.w, scope.object.quaternion.x, ,scope.object.quaternion.y, scope.object.quaternion.z];
-
+		var q = [scope.object.quaternion.w, 
+				scope.object.quaternion.x ,
+				scope.object.quaternion.y, 
+				scope.object.quaternion.z ];
 
 		gx = 2 * (q[1]*q[3] - q[0]*q[2]);
+		console.log(q[1]*q[3]);
 		gy = 2 * (q[0]*q[1] + q[2]*q[3]);
 		gz = q[0]*q[0] - q[1]*q[1] - q[2]*q[2] + q[3]*q[3];
-
 		ypr[0] = Math.atan2(2 * q[1] * q[2] - 2 * q[0] * q[3], 2 * q[0]*q[0] + 2 * q[1] * q[1] - 1);
 		ypr[1] = Math.atan(gx / Math.sqrt(gy*gy + gz*gz));
 		ypr[2] = Math.atan(gy / Math.sqrt(gx*gx + gz*gz));
+
+		ypr[0] *= radtoDeg;
+		ypr[1] *= radtoDeg;
+		ypr[2] *= radtoDeg;
+
 		return ypr;
 	};
 

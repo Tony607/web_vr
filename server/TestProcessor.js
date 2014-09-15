@@ -3,15 +3,16 @@ var OrientationProcessor = require("./OrientationProcessor.js")
 var camera = new THREE.PerspectiveCamera( 75, 1920 / 1080, 1, 1000 );
 
 var controls = new OrientationProcessor(camera);
-/**
 
 //initial
 controls.deviceOrientation = {alpha: 30, beta: 10, gamma: 10};
 controls.update();
 var eu = (new THREE.Euler()).setFromQuaternion(controls.object.quaternion);
-console.log("x=",THREE.Math.radToDeg(eu.x))
+console.log(controls.getYawPitchRoll());
+/*console.log("x=",THREE.Math.radToDeg(eu.x))
 console.log("y=",THREE.Math.radToDeg(eu.y))
-console.log("z=",THREE.Math.radToDeg(eu.z))
+console.log("z=",THREE.Math.radToDeg(eu.z))*/
+/**
 
 //
 

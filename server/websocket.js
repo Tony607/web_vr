@@ -20,7 +20,7 @@ function crateSerialPortData(orientation) {
 	var str = orientation.alpha.toFixed(1) +":"+
 	orientation.beta.toFixed(1) +":"+  
 	orientation.gamma.toFixed(1)+"#";
-	console.log(str);
+	//console.log(str);
 	return str;
 }
 var arduinoPort;
@@ -44,7 +44,7 @@ wss.on('connection', function(ws) {
 		console.log("Yaw-Pitch-Roll:",controls.getYawPitchRoll());
 
     	if(arduinoPort && !arduinoPort.paused){
-    		console.log("writing to serialport...");
+    		//console.log("writing to serialport...");
     		arduinoPort.write(crateSerialPortData(clientdeviceorientation));
     	}
     });
