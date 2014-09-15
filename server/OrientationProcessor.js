@@ -48,6 +48,33 @@ function OrientationProcessor( object ) {
 
 	};
 
+	/**
+	* Returns the yaw pitch and roll angles, respectively defined as the angles in radians between
+	* the Earth North and the IMU X axis (yaw), the Earth ground plane and the IMU X axis (pitch)
+	* and the Earth ground plane and the IMU Y axis.
+	* 
+	* @note This is not an Euler representation: the rotations aren't consecutive rotations but only
+	* angles from Earth and the IMU. For Euler representation Yaw, Pitch and Roll see FreeIMU::getEuler
+	* 
+	* @param ypr three floats array which will be populated by Yaw, Pitch and Roll angles in radians
+	*/
+	this.getYawPitchRoll = function () {
+		var q = [1,0,0,0]; // quaternion[w,x,y,z]
+		var ypr = [0,0,0]; 
+		var gx, gy, gz; // estimated gravity direction
+		var q = [scope.object.quaternion.w, scope.object.quaternion.x, ,scope.object.quaternion.y, scope.object.quaternion.z];
+
+
+		gx = 2 * (q[1]*q[3] - q[0]*q[2]);
+		gy = 2 * (q[0]*q[1] + q[2]*q[3]);
+		gz = q[0]*q[0] - q[1]*q[1] - q[2]*q[2] + q[3]*q[3];
+
+		ypr[0] = atan2(2 * q[1] * q[2] - 2 * q[0] * q[3], 2 * q[0]*q[0] + 2 * q[1] * q[1] - 1);
+		ypr[1] = atan(gx / sqrt(gy*gy + gz*gz));
+		ypr[2] = atan(gy / sqrt(gx*gx + gz*gz));
+		return ypr;
+	};
+
 };
 // export the class
 module.exports = OrientationProcessor;

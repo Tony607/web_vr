@@ -13,6 +13,11 @@
  * W3C Device Orientation control
  * (http://w3c.github.io/deviceorientation/spec-source-orientation.html)
  */
+if ( typeof module === 'object' ) {
+
+        module.exports = THREE;
+
+}
 
 var THREE = require("three");
 THREE.DeviceOrientationControls = function(object) {
@@ -59,12 +64,11 @@ THREE.DeviceOrientationControls = function(object) {
     // if (!window.orientation && window.innerWidth > window.innerHeight)
     //   return 90;
     return 90 || 0;
-  };
 
 
   this.update = function(rawEvtData) {
-    this.deviceOrientation = rawEvtData;
     return function() {
+    this.deviceOrientation = rawEvtData;
 
       if (this.freeze) return;
 
@@ -151,4 +155,4 @@ THREE.DeviceOrientationControls = function(object) {
 
   };
 
-
+};

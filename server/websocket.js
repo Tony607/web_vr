@@ -1,5 +1,10 @@
 /**define constant related to the servos*/
 //the 90 degree servo unit
+var OrientationProcessor = require("./OrientationProcessor.js");
+var camera = new THREE.PerspectiveCamera( 75, 1920 / 1080, 1, 1000 );
+var controls = new OrientationProcessor(camera);
+
+
 var servoOffsets = [0x59, 0x49, 0x45];
 //the clamp unit for each servo
 var servoLimits = [[0x18,0xA7],[0x02, 0x95],[0x06,0x90]];
@@ -8,7 +13,7 @@ var degreePerUnit = 180.0/143.0;
 var clientdeviceorientation = {
 	alpha: 0,
 	beta: 0,
-	gamma:0,
+	gamma:0
 };
 function crateSerialPortData(orientation) {
 	var str = orientation.alpha.toFixed(1) +":"+
@@ -31,7 +36,12 @@ var WebSocketServer = require('ws').Server
   , wss = new WebSocketServer({port: 8080});
 wss.on('connection', function(ws) {
     ws.on('message', function(message) {
-        clientdeviceorientation = JSON.parse(message)
+        clientdeviceorientation = JSON.parse(message);
+        controls.deviceOrientation = {alpha: 219.27788188757236, beta: -148.12295057591487, gamma: 61.30556711004572};
+		controls.update();
+		//controls.object.quaternion;
+		console.log("Yaw-Pitch-Roll:",controls.getYawPitchRoll());
+
     	if(arduinoPort && !arduinoPort.paused){
     		console.log("writing to serialport...");
     		arduinoPort.write(crateSerialPortData(clientdeviceorientation));
