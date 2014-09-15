@@ -38,7 +38,7 @@ var WebSocketServer = require('ws').Server
 wss.on('connection', function(ws) {
     ws.on('message', function(message) {
         clientdeviceorientation = JSON.parse(message);
-        controls.deviceOrientation = {alpha: 219.27788188757236, beta: -148.12295057591487, gamma: 61.30556711004572};
+        controls.deviceOrientation = clientdeviceorientation;
 		controls.update();
 		//controls.object.quaternion;
 		console.log("Yaw-Pitch-Roll:",controls.getYawPitchRoll());
