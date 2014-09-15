@@ -69,9 +69,9 @@ function OrientationProcessor( object ) {
 		gy = 2 * (q[0]*q[1] + q[2]*q[3]);
 		gz = q[0]*q[0] - q[1]*q[1] - q[2]*q[2] + q[3]*q[3];
 
-		ypr[0] = atan2(2 * q[1] * q[2] - 2 * q[0] * q[3], 2 * q[0]*q[0] + 2 * q[1] * q[1] - 1);
-		ypr[1] = atan(gx / sqrt(gy*gy + gz*gz));
-		ypr[2] = atan(gy / sqrt(gx*gx + gz*gz));
+		ypr[0] = Math.atan2(2 * q[1] * q[2] - 2 * q[0] * q[3], 2 * q[0]*q[0] + 2 * q[1] * q[1] - 1);
+		ypr[1] = Math.atan(gx / Math.sqrt(gy*gy + gz*gz));
+		ypr[2] = Math.atan(gy / Math.sqrt(gx*gx + gz*gz));
 		return ypr;
 	};
 
