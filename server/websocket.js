@@ -1,6 +1,7 @@
 /**define constant related to the servos*/
 //the 90 degree servo unit
 var OrientationProcessor = require("./OrientationProcessor.js");
+var THREE = require("three");
 var camera = new THREE.PerspectiveCamera( 75, 1920 / 1080, 1, 1000 );
 var controls = new OrientationProcessor(camera);
 
