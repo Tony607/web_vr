@@ -9,12 +9,13 @@ var clientdeviceorientation = {
 	beta: 0,
 	gamma:0
 };
-function crateSerialPortData(orientation) {
-	var str = orientation.alpha.toFixed(1) +":"+
-	orientation.beta.toFixed(1) +":"+  
-	orientation.gamma.toFixed(1)+"#";
-	//console.log(str);
-	return str;
+function crateSerialPortData(array) {
+	var buf = new Buffer(4);
+	buf[0] = 0xFF;
+	for (var i = 1; i < buf.length; i++) {
+		buf[i] = array[i];
+	};
+	return buf;
 }
 var arduinoPort;
 /**
@@ -34,11 +35,11 @@ wss.on('connection', function(ws) {
         controls.deviceOrientation = clientdeviceorientation;
 		controls.update();
 		//controls.object.quaternion;
-		console.log(controls.getYawPitchRoll());
-
+		var servoArray = controls.getYawPitchRoll();		
     	if(arduinoPort && !arduinoPort.paused){
-    		//console.log("writing to serialport...");
-    		arduinoPort.write(crateSerialPortData(clientdeviceorientation));
+    		var writeBuffer = crateSerialPortData(servoArray)
+    		console.log(writeBuffer);
+    		arduinoPort.write(writeBuffer);
     	}
     });
     ws.send('something');
