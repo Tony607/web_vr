@@ -13,7 +13,7 @@ function crateSerialPortData(array) {
 	var buf = new Buffer(4);
 	buf[0] = 0xFF;
 	for (var i = 1; i < buf.length; i++) {
-		buf[i] = array[i+1];
+		buf[i] = array[i-1];
 	};
 	return buf;
 }
