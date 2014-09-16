@@ -1,36 +1,45 @@
 var THREE = require("three");
-function OrientationProcessor( object ) {
+function OrientationProcessor() {
 	var scope = this;
 	var radtoDeg = 180 / Math.PI;
-	this.object = object;
+	var deviceQuat = new THREE.Quaternion();
 
-	this.object.rotation.reorder( "YXZ" );
+
 
 	this.deviceOrientation = {alpha: 43.06647261669845, beta: -1.8509070242249999, gamma: -87.30062171830068};
-
-	this.screenOrientation = 0;
+	//landscape
+	this.screenOrientation = 90;
 
 	// The angles alpha, beta and gamma form a set of intrinsic Tait-Bryan angles of type Z-X'-Y''
 
-	var setObjectQuaternion = function () {
+	var createQuaternion = function () {
 
-		var zee = new THREE.Vector3( 0, 0, 1 );
 
-		var euler = new THREE.Euler();
+		var finalQuaternion = new THREE.Quaternion();
 
-		var q0 = new THREE.Quaternion();
+		var deviceEuler = new THREE.Euler();
 
-		var q1 = new THREE.Quaternion( - Math.sqrt( 0.5 ), 0, 0, Math.sqrt( 0.5 ) ); // - PI/2 around the x-axis
+		var screenTransform = new THREE.Quaternion();
 
-		return function ( quaternion, alpha, beta, gamma, orient ) {
+		var worldTransform = new THREE.Quaternion( - Math.sqrt(0.5), 0, 0, Math.sqrt(0.5) ); // - PI/2 around the x-axis
 
-			euler.set( beta, alpha, - gamma, 'YXZ' );                       // 'ZXY' for the device, but 'YXZ' for us
+		var minusHalfAngle = 0;
 
-			quaternion.setFromEuler( euler );                               // orient the device
+		return function ( alpha, beta, gamma, screenOrientation ) {
 
-			quaternion.multiply( q1 );                                      // camera looks out the back of the device, not the top
+			deviceEuler.set( beta, alpha, - gamma, 'YXZ' );
 
-			quaternion.multiply( q0.setFromAxisAngle( zee, - orient ) );    // adjust for screen orientation
+			finalQuaternion.setFromEuler( deviceEuler );
+
+			minusHalfAngle = - screenOrientation / 2;
+
+			screenTransform.set( 0, Math.sin( minusHalfAngle ), 0, Math.cos( minusHalfAngle ) );
+
+			finalQuaternion.multiply( screenTransform );
+
+			finalQuaternion.multiply( worldTransform );
+
+			return finalQuaternion;
 
 		}
 
@@ -43,8 +52,8 @@ function OrientationProcessor( object ) {
 		var beta   = scope.deviceOrientation.beta  ? THREE.Math.degToRad( scope.deviceOrientation.beta  ) : 0; // X'
 		var gamma  = scope.deviceOrientation.gamma ? THREE.Math.degToRad( scope.deviceOrientation.gamma ) : 0; // Y''
 		var orient = scope.screenOrientation       ? THREE.Math.degToRad( scope.screenOrientation       ) : 0; // O
-
-		setObjectQuaternion( scope.object.quaternion, alpha, beta, gamma, orient );
+		//scope.object.quaternion
+		deviceQuat = createQuaternion(alpha, beta, gamma, orient );
 
 	};
 
@@ -62,13 +71,12 @@ function OrientationProcessor( object ) {
 		var q = [1,0,0,0]; // quaternion[w,x,y,z]
 		var ypr = [0,0,0]; 
 		var gx, gy, gz; // estimated gravity direction
-		var q = [scope.object.quaternion.w, 
-				scope.object.quaternion.x ,
-				scope.object.quaternion.y, 
-				scope.object.quaternion.z ];
+		var q = [deviceQuat.w, 
+				deviceQuat.x ,
+				deviceQuat.y, 
+				deviceQuat.z ];
 
 		gx = 2 * (q[1]*q[3] - q[0]*q[2]);
-		console.log(q[1]*q[3]);
 		gy = 2 * (q[0]*q[1] + q[2]*q[3]);
 		gz = q[0]*q[0] - q[1]*q[1] - q[2]*q[2] + q[3]*q[3];
 		ypr[0] = Math.atan2(2 * q[1] * q[2] - 2 * q[0] * q[3], 2 * q[0]*q[0] + 2 * q[1] * q[1] - 1);
@@ -78,6 +86,9 @@ function OrientationProcessor( object ) {
 		ypr[0] *= radtoDeg;
 		ypr[1] *= radtoDeg;
 		ypr[2] *= radtoDeg;
+		for (var i = 0; i < ypr.length; i++) {
+			ypr[i] = ypr[i].toFixed(1);
+		};
 
 		return ypr;
 	};

@@ -41,7 +41,7 @@ wss.on('connection', function(ws) {
         controls.deviceOrientation = clientdeviceorientation;
 		controls.update();
 		//controls.object.quaternion;
-		console.log("Yaw-Pitch-Roll:",controls.getYawPitchRoll());
+		console.log(controls.getYawPitchRoll());
 
     	if(arduinoPort && !arduinoPort.paused){
     		//console.log("writing to serialport...");
