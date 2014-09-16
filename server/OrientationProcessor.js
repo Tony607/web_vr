@@ -5,7 +5,14 @@ function OrientationProcessor() {
 	var deviceQuat = new THREE.Quaternion();
 
 
-
+	var servoOffsets = [0x59, 0x49, 0x45];
+	var servoDirections = [1, 1, 1];
+	//the clamp unit for each servo
+	var servoLimits = [[0x18,0xA7],[0x02, 0x95],[0x06,0x90]];
+	var clamp = function(num, min, max) {
+	    return num < min ? min : (num > max ? max : num);
+	};
+	var degreePerUnit = 180.0/143.0;
 	this.deviceOrientation = {alpha: 43.06647261669845, beta: -1.8509070242249999, gamma: -87.30062171830068};
 	//landscape
 	this.screenOrientation = 90;
@@ -79,15 +86,19 @@ function OrientationProcessor() {
 		gx = 2 * (q[1]*q[3] - q[0]*q[2]);
 		gy = 2 * (q[0]*q[1] + q[2]*q[3]);
 		gz = q[0]*q[0] - q[1]*q[1] - q[2]*q[2] + q[3]*q[3];
-		ypr[0] = Math.atan2(2 * q[1] * q[2] - 2 * q[0] * q[3], 2 * q[0]*q[0] + 2 * q[1] * q[1] - 1);
-		ypr[1] = Math.atan(gx / Math.sqrt(gy*gy + gz*gz));
-		ypr[2] = Math.atan(gy / Math.sqrt(gx*gx + gz*gz));
+		ypr[0] = Math.atan(gx / Math.sqrt(gy*gy + gz*gz));
+		ypr[1] = Math.atan(gy / Math.sqrt(gx*gx + gz*gz));
+		ypr[2] = Math.atan2(2 * q[1] * q[2] - 2 * q[0] * q[3], 2 * q[0]*q[0] + 2 * q[1] * q[1] - 1);
 
 		ypr[0] *= radtoDeg;
 		ypr[1] *= radtoDeg;
 		ypr[2] *= radtoDeg;
 		for (var i = 0; i < ypr.length; i++) {
-			ypr[i] = ypr[i].toFixed(1);
+			var min = servoLimits[i][0];
+			var max = servoLimits[i][1];
+			ypr[i] = clamp(servoDirections[i]*ypr[i]*degreePerUnit+servoOffsets[i], min, max);
+			ypr[i] = ypr[i].toFixed(0);
+
 		};
 
 		return ypr;

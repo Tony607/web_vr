@@ -2,14 +2,7 @@
 //the 90 degree servo unit
 var OrientationProcessor = require("./OrientationProcessor.js");
 var THREE = require("three");
-var camera = new THREE.PerspectiveCamera( 75, 1920 / 1080, 1, 1000 );
-var controls = new OrientationProcessor(camera);
 
-
-var servoOffsets = [0x59, 0x49, 0x45];
-//the clamp unit for each servo
-var servoLimits = [[0x18,0xA7],[0x02, 0x95],[0x06,0x90]];
-var degreePerUnit = 180.0/143.0;
 
 var clientdeviceorientation = {
 	alpha: 0,
