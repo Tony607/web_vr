@@ -8,7 +8,7 @@ function OrientationProcessor( object ) {
 
 	this.deviceOrientation = {alpha: 43.06647261669845, beta: -1.8509070242249999, gamma: -87.30062171830068};
 
-	this.screenOrientation = 90;
+	this.screenOrientation = 0;
 
 	// The angles alpha, beta and gamma form a set of intrinsic Tait-Bryan angles of type Z-X'-Y''
 
