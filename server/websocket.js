@@ -2,7 +2,7 @@
 //the 90 degree servo unit
 var OrientationProcessor = require("./OrientationProcessor.js");
 var THREE = require("three");
-
+var controls = new OrientationProcessor();
 
 var clientdeviceorientation = {
 	alpha: 0,
