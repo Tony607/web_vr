@@ -17,7 +17,6 @@ function crateSerialPortData(array) {
 	};
 	return buf;
 }
-var arduinoPort;
 /**
 in arduino yun the default serial port to 32u4 is named ttyATH0
 in Cubie Board 2 + arduino Pro Micro with usb connection,
@@ -30,17 +29,18 @@ var WebSocketServer = require('ws').Server
   , wss = new WebSocketServer({port: 8089});
 wss.on('connection', function(ws) {
     ws.on('message', function(message) {
-        clientdeviceorientation = JSON.parse(message);
+		try{
+			clientdeviceorientation = JSON.parse(message);
+		}catch(e){
+			console.log(e);
+		}
 		//is browser device orientation object
 		if(clientdeviceorientation.hasOwnProperty("alpha")){
 			controls.deviceOrientation = clientdeviceorientation;
 			controls.update();
 		} else //is quaternion from Android application
 		if(clientdeviceorientation.hasOwnProperty("x")){
-			console.log("quaternion:",clientdeviceorientation.x
-										,clientdeviceorientation.y
-										,clientdeviceorientation.z
-										,clientdeviceorientation.w);
+			var servoArray = controls.getYawPitchRollFromDeviceQuaternion(clientdeviceorientation);
 		} else {
 			console.log("Unknown orientation format.");
 		}

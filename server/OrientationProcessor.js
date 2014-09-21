@@ -103,6 +103,55 @@ function OrientationProcessor() {
 
 		return ypr;
 	};
+	this.getYawPitchRollFromDeviceQuaternion = function (quaternion) {
+	
+		var deviceQuaternion = new THREE.Quaternion();
+		var screenTransform = new THREE.Quaternion();
+		var worldTransform = new THREE.Quaternion(0,  Math.sqrt(0.5), 0, Math.sqrt(0.5) );
+		
+		deviceQuaternion.set( quaternion.x,quaternion.y,quaternion.z,quaternion.w );
+
+		var minusHalfAngle = -45;//-90/2
+
+		screenTransform.set( 0, Math.sin( minusHalfAngle ), 0, Math.cos( minusHalfAngle ) );
+
+		//deviceQuaternion.multiply( screenTransform );
+
+		deviceQuaternion.multiply( worldTransform );
+
+		var q = [1,0,0,0]; // quaternion[w,x,y,z]
+		var ypr = [0,0,0]; 
+		var gx, gy, gz; // estimated gravity direction
+		var q = [deviceQuaternion.w, 
+				deviceQuaternion.x ,
+				deviceQuaternion.y, 
+				deviceQuaternion.z ];
+
+		gx = 2 * (q[1]*q[3] - q[0]*q[2]);
+		gy = 2 * (q[0]*q[1] + q[2]*q[3]);
+		gz = q[0]*q[0] - q[1]*q[1] - q[2]*q[2] + q[3]*q[3];
+		ypr[0] = Math.atan(gx / Math.sqrt(gy*gy + gz*gz));
+		ypr[1] = Math.atan(gy / Math.sqrt(gx*gx + gz*gz));
+		ypr[2] = Math.atan2(2 * q[1] * q[2] - 2 * q[0] * q[3], 2 * q[0]*q[0] + 2 * q[1] * q[1] - 1);
+
+		ypr[0] *= radtoDeg;
+		ypr[1] *= radtoDeg;
+		ypr[2] *= radtoDeg;
+		var tmp = ypr[2];
+		ypr[2] = ypr[1];
+		ypr[1] = ypr[0];
+		ypr[0] = tmp;
+		//print the angles
+		console.log("angles:",ypr[0].toFixed(2),ypr[1].toFixed(2),ypr[2].toFixed(2));
+		for (var i = 0; i < ypr.length; i++) {
+			var min = servoLimits[i][0];
+			var max = servoLimits[i][1];
+			ypr[i] = clamp(servoDirections[i]*ypr[i]*degreePerUnit+servoOffsets[i], min, max);
+			ypr[i] = ypr[i].toFixed(0);
+
+		};
+		return ypr;
+	};
 
 };
 // export the class

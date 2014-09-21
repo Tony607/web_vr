@@ -31,11 +31,23 @@ var WebSocketServer = require('ws').Server
   , wss = new WebSocketServer({port: 8080});
 wss.on('connection', function(ws) {
     ws.on('message', function(message) {
-        clientdeviceorientation = JSON.parse(message);
-        controls.deviceOrientation = clientdeviceorientation;
-		controls.update();
-		//controls.object.quaternion;
-		var servoArray = controls.getYawPitchRoll();		
+		var servoArray;
+        try{
+			clientdeviceorientation = JSON.parse(message);
+		}catch(e){
+			console.log(e);
+		}
+		//is browser device orientation object
+		if(clientdeviceorientation.hasOwnProperty("alpha")){
+			controls.deviceOrientation = clientdeviceorientation;
+			controls.update();
+			servoArray = controls.getYawPitchRoll();
+		} else //is quaternion from Android application
+		if(clientdeviceorientation.hasOwnProperty("x")){
+			servoArray = controls.getYawPitchRollFromDeviceQuaternion(clientdeviceorientation);
+		} else {
+			console.log("Unknown orientation format.");
+		}	
     	if(arduinoPort && !arduinoPort.paused){
     		var writeBuffer = crateSerialPortData(servoArray)
     		console.log(writeBuffer);
