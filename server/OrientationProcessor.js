@@ -12,7 +12,7 @@ function OrientationProcessor() {
 	var clamp = function(num, min, max) {
 	    return num < min ? min : (num > max ? max : num);
 	};
-	var degreePerUnit = 180.0/143.0;
+	var degreePerUnit = 0.839;//180.0/143.0*60/90;
 	this.deviceOrientation = {alpha: 43.06647261669845, beta: -1.8509070242249999, gamma: -87.30062171830068};
 	//landscape
 	this.screenOrientation = 90;
