@@ -43,8 +43,9 @@ wss.on('connection', function(ws) {
 			controls.update();
 			servoArray = controls.getYawPitchRoll();
 		} else //is quaternion from Android application
-		if(clientdeviceorientation.hasOwnProperty("x")){
-			servoArray = controls.getYawPitchRollFromDeviceQuaternion(clientdeviceorientation);
+		if(clientdeviceorientation.length){
+			//try to use the first quaternion, the head tracking
+			var servoArray = controls.getYawPitchRollFromQuaternion(clientdeviceorientation[0]);
 		} else {
 			console.log("Unknown orientation format.");
 		}	

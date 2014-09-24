@@ -103,29 +103,14 @@ function OrientationProcessor() {
 
 		return ypr;
 	};
-	this.getYawPitchRollFromDeviceQuaternion = function (quaternion) {
-	
-		var deviceQuaternion = new THREE.Quaternion();
-		var screenTransform = new THREE.Quaternion();
-		var worldTransform = new THREE.Quaternion(0,  Math.sqrt(0.5), 0, Math.sqrt(0.5) );
-		
-		deviceQuaternion.set( quaternion.x,quaternion.y,quaternion.z,quaternion.w );
-
-		var minusHalfAngle = -45;//-90/2
-
-		screenTransform.set( 0, Math.sin( minusHalfAngle ), 0, Math.cos( minusHalfAngle ) );
-
-		//deviceQuaternion.multiply( screenTransform );
-
-		deviceQuaternion.multiply( worldTransform );
-
-		var q = [1,0,0,0]; // quaternion[w,x,y,z]
+	this.getYawPitchRollFromQuaternion = function (quaternion) {
+	var q = [1,0,0,0]; // quaternion[w,x,y,z]
 		var ypr = [0,0,0]; 
 		var gx, gy, gz; // estimated gravity direction
-		var q = [deviceQuaternion.w, 
-				deviceQuaternion.x ,
-				deviceQuaternion.y, 
-				deviceQuaternion.z ];
+		var q = [quaternion.w, 
+				quaternion.x ,
+				quaternion.y, 
+				quaternion.z ];
 
 		gx = 2 * (q[1]*q[3] - q[0]*q[2]);
 		gy = 2 * (q[0]*q[1] + q[2]*q[3]);
@@ -151,6 +136,24 @@ function OrientationProcessor() {
 
 		};
 		return ypr;
+	};
+	this.getYawPitchRollFromDeviceQuaternion = function (quaternion) {
+	
+		var deviceQuaternion = new THREE.Quaternion();
+		var screenTransform = new THREE.Quaternion();
+		var worldTransform = new THREE.Quaternion(0,  Math.sqrt(0.5), 0, Math.sqrt(0.5) );
+		
+		deviceQuaternion.set( quaternion.x,quaternion.y,quaternion.z,quaternion.w );
+		
+		var minusHalfAngle = -45;//-90/2
+
+		screenTransform.set( 0, Math.sin( minusHalfAngle ), 0, Math.cos( minusHalfAngle ) );
+
+		//deviceQuaternion.multiply( screenTransform );
+
+		deviceQuaternion.multiply( worldTransform );
+
+		return this.getYawPitchRollFromQuaternion(deviceQuaternion);
 	};
 
 };
