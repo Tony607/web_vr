@@ -122,8 +122,7 @@ function OrientationProcessor() {
 		ypr[0] *= radtoDeg;
 		ypr[1] *= radtoDeg;
 		ypr[2] *= radtoDeg;
-		var tmp = ypr[2];
-		ypr[2] = ypr[1];
+		var tmp = ypr[1];
 		ypr[1] = ypr[0];
 		ypr[0] = tmp;
 		//print the angles
