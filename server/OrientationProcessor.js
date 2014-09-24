@@ -6,7 +6,7 @@ function OrientationProcessor() {
 
 
 	var servoOffsets = [0x59, 0x49, 0x45];
-	var servoDirections = [-1, -1, 1];
+	var servoDirections = [1, -1, 1];
 	//the clamp unit for each servo
 	var servoLimits = [[0x18,0xA7],[0x02, 0x95],[0x06,0x90]];
 	var clamp = function(num, min, max) {
