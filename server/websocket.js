@@ -26,7 +26,7 @@ the serial port is named ttyACM0
 TODO: if needs support other ATmega328 based boards, the usb-serial connection 
 will be named ttyUSB0
 */
-var serialportName = require("os").hostname()==="Arduino"?"ttyATH0":"ttyACM0";
+var serialportName = require("os").hostname()==="Arduino"?"ttyATH0":"ttyUSB0";
 var WebSocketServer = require('ws').Server
   , wss = new WebSocketServer({port: 8080});
 wss.on('connection', function(ws) {
