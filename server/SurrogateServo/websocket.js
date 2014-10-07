@@ -55,7 +55,7 @@ var serialport = require("serialport");
 var SerialPort = serialport.SerialPort; // localize object constructor
 arduinoPort = new SerialPort("/dev/"+serialportName, {
 		baudrate : 115200,
-		parser : serialport.parsers.readline("#")
+		parser: serialport.parsers.raw//parser : serialport.parsers.readline("#")
 	});
 arduinoPort.on("open", function () {
 	console.log('arduinoPort->open');
