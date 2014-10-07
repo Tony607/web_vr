@@ -2,9 +2,9 @@ var serialport = require("serialport");
 var SerialPort = serialport.SerialPort; // localize object constructor
 
 var arduinoPort = new SerialPort("/dev/ttyUSB0", {
-  parser: serialport.parsers.raw
-});
-
+		baudrate : 115200,
+		parser : serialport.parsers.raw
+	});
 
 arduinoPort.on('data', function (data) {
 	console.log(data);
