@@ -42,9 +42,9 @@ var constructQuaternionByBytes = function (bytes_array) {
 		z : 0,
 		w : 1
 	};
-	q.x = bytes_array[0];
-	q.y = bytes_array[1];
-	q.z = bytes_array[2];
-	q.w = bytes_array[3];
+	q.x = (bytes_array[0] & 0xFF) / 127 - 1;
+	q.y = (bytes_array[1] & 0xFF) / 127 - 1;
+	q.z = (bytes_array[2] & 0xFF) / 127 - 1;
+	q.w = (bytes_array[3] & 0xFF) / 127 - 1;
 	console.log("Quaternion:", q);
 }
