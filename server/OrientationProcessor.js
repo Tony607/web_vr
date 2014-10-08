@@ -1,113 +1,29 @@
+var CameraServo = require("./CameraServo.js");
+var RobotSpeedControl = require("./RobotSpeedControl.js");
 var THREE = require("three");
-function OrientationProcessor() {
-	var scope = this;
+function OrientationProcessor(servosMap) {
+	//Three servos
+	var yawServo;
+	var pitchServo;
+	var rollServo;
+	//RobotSpeedControl instance for calculating throttle and steering data
+	var robotSpeedController;
+	//Camera Local Quaternion
+	var q_CameraLocal = new THREE.Quaternion();
+	//Aligned and adjusted Quaternion of the head mount display, in this case the Google Cardboard
+	var q_CameraWorld = new THREE.Quaternion();
+	//Aligned and adjusted Quaternion of the wearable body tracker, it is placed on upper human body
+	var q_BodyWorld = new THREE.Quaternion();
+	//Robot IMU Measured Quaternion
+	var q_RobotWorld = new THREE.Quaternion();
+
 	var radtoDeg = 180 / Math.PI;
-	var deviceQuat = new THREE.Quaternion();
-
-	var servoOffsets = [0x59, 0x49, 0x45];
-	var servoDirections = [1, -1, 1];
-	//the clamp unit for each servo
-	var servoLimits = [[0x18, 0xA7], [0x02, 0x95], [0x06, 0x90]];
-	var clamp = function (num, min, max) {
-		return num < min ? min : (num > max ? max : num);
-	};
-	var degreePerUnit = 0.839; //180.0/143.0*60/90;
-	this.deviceOrientation = {
-		alpha : 43.06647261669845,
-		beta : -1.8509070242249999,
-		gamma : -87.30062171830068
-	};
-	//landscape
-	this.screenOrientation = 90;
-
-	// The angles alpha, beta and gamma form a set of intrinsic Tait-Bryan angles of type Z-X'-Y''
-
-	var createQuaternion = function () {
-
-		var finalQuaternion = new THREE.Quaternion();
-
-		var deviceEuler = new THREE.Euler();
-
-		var screenTransform = new THREE.Quaternion();
-
-		var worldTransform = new THREE.Quaternion( - Math.sqrt(0.5), 0, 0, Math.sqrt(0.5)); // - PI/2 around the x-axis
-
-		var minusHalfAngle = 0;
-
-		return function (alpha, beta, gamma, screenOrientation) {
-
-			deviceEuler.set(beta, alpha,  - gamma, 'YXZ');
-
-			finalQuaternion.setFromEuler(deviceEuler);
-
-			minusHalfAngle =  - screenOrientation / 2;
-
-			screenTransform.set(0, Math.sin(minusHalfAngle), 0, Math.cos(minusHalfAngle));
-
-			finalQuaternion.multiply(screenTransform);
-
-			finalQuaternion.multiply(worldTransform);
-
-			return finalQuaternion;
-
-		}
-
-	}
-	();
-
-	this.update = function () {
-
-		var alpha = scope.deviceOrientation.alpha ? THREE.Math.degToRad(scope.deviceOrientation.alpha) : 0; // Z
-		var beta = scope.deviceOrientation.beta ? THREE.Math.degToRad(scope.deviceOrientation.beta) : 0; // X'
-		var gamma = scope.deviceOrientation.gamma ? THREE.Math.degToRad(scope.deviceOrientation.gamma) : 0; // Y''
-		var orient = scope.screenOrientation ? THREE.Math.degToRad(scope.screenOrientation) : 0; // O
-		//scope.object.quaternion
-		deviceQuat = createQuaternion(alpha, beta, gamma, orient);
-
-	};
 
 	/**
-	 * Returns the yaw pitch and roll angles, respectively defined as the angles in radians between
-	 * the Earth North and the IMU X axis (yaw), the Earth ground plane and the IMU X axis (pitch)
-	 * and the Earth ground plane and the IMU Y axis.
-	 *
-	 * @note This is not an Euler representation: the rotations aren't consecutive rotations but only
-	 * angles from Earth and the IMU. For Euler representation Yaw, Pitch and Roll see FreeIMU::getEuler
-	 *
-	 * @param ypr three floats array which will be populated by Yaw, Pitch and Roll angles in radians
+	function to get the actual turning angles array(length of 3) for those three servos from the
+	Camera's local Quaternion		(q_CameraLocal)
 	 */
-	this.getYawPitchRoll = function () {
-		var q = [1, 0, 0, 0]; // quaternion[w,x,y,z]
-		var ypr = [0, 0, 0];
-		var gx,
-		gy,
-		gz; // estimated gravity direction
-		var q = [deviceQuat.w,
-			deviceQuat.x,
-			deviceQuat.y,
-			deviceQuat.z];
-
-		gx = 2 * (q[1] * q[3] - q[0] * q[2]);
-		gy = 2 * (q[0] * q[1] + q[2] * q[3]);
-		gz = q[0] * q[0] - q[1] * q[1] - q[2] * q[2] + q[3] * q[3];
-		ypr[0] = Math.atan(gx / Math.sqrt(gy * gy + gz * gz));
-		ypr[1] = Math.atan(gy / Math.sqrt(gx * gx + gz * gz));
-		ypr[2] = Math.atan2(2 * q[1] * q[2] - 2 * q[0] * q[3], 2 * q[0] * q[0] + 2 * q[1] * q[1] - 1);
-
-		ypr[0] *= radtoDeg;
-		ypr[1] *= radtoDeg;
-		ypr[2] *= radtoDeg;
-		for (var i = 0; i < ypr.length; i++) {
-			var min = servoLimits[i][0];
-			var max = servoLimits[i][1];
-			ypr[i] = clamp(servoDirections[i] * ypr[i] * degreePerUnit + servoOffsets[i], min, max);
-			ypr[i] = ypr[i].toFixed(0);
-
-		};
-
-		return ypr;
-	};
-	this.getYawPitchRollFromQuaternion = function (quaternion) {
+	var getYawPitchRollFromQuaternion = function (quaternion) {
 		var ypr = [0, 0, 0];
 		var gx,
 		gy,
@@ -130,36 +46,181 @@ function OrientationProcessor() {
 		var tmp = ypr[1];
 		ypr[1] = ypr[0];
 		ypr[0] = tmp;
+
 		//print the angles
 		console.log("angles:", ypr[0].toFixed(2), ypr[1].toFixed(2), ypr[2].toFixed(2));
-		for (var i = 0; i < ypr.length; i++) {
-			var min = servoLimits[i][0];
-			var max = servoLimits[i][1];
-			ypr[i] = clamp(servoDirections[i] * ypr[i] * degreePerUnit + servoOffsets[i], min, max);
-			ypr[i] = ypr[i].toFixed(0);
-
-		};
 		return ypr;
 	};
-	this.getYawPitchRollFromDeviceQuaternion = function (quaternion) {
 
-		var deviceQuaternion = new THREE.Quaternion();
-		var screenTransform = new THREE.Quaternion();
-		var worldTransform = new THREE.Quaternion(0, Math.sqrt(0.5), 0, Math.sqrt(0.5));
+	/**
+	function to get the Pitch angle from quaternion
+	 */
+	var getPitchFromQuaternion = function (quaternion) {
+		var pitch;
+		var gx,
+		gy,
+		gz; // estimated gravity direction
+		var q = [quaternion.w,
+			quaternion.x,
+			quaternion.y,
+			quaternion.z];
 
-		deviceQuaternion.set(quaternion.x, quaternion.y, quaternion.z, quaternion.w);
+		gx = 2 * (q[1] * q[3] - q[0] * q[2]);
+		gy = 2 * (q[0] * q[1] + q[2] * q[3]);
+		gz = q[0] * q[0] - q[1] * q[1] - q[2] * q[2] + q[3] * q[3];
+		pitch = Math.atan(gx / Math.sqrt(gy * gy + gz * gz));
 
-		var minusHalfAngle = -45; //-90/2
+		pitch *= radtoDeg;
 
-		screenTransform.set(0, Math.sin(minusHalfAngle), 0, Math.cos(minusHalfAngle));
+		//print the pitch angle
+		console.log("Pitch:", pitch.toFixed(2));
+		return pitch;
+	};
+	/**
+	function to get the Yaw angle from quaternion
+	 */
+	var getYawFromQuaternion = function (quaternion) {
+		var yaw;
+		var gx,
+		gy,
+		gz; // estimated gravity direction
+		var q = [quaternion.w,
+			quaternion.x,
+			quaternion.y,
+			quaternion.z];
 
-		//deviceQuaternion.multiply( screenTransform );
+		gx = 2 * (q[1] * q[3] - q[0] * q[2]);
+		gy = 2 * (q[0] * q[1] + q[2] * q[3]);
+		gz = q[0] * q[0] - q[1] * q[1] - q[2] * q[2] + q[3] * q[3];
+		yaw = Math.atan2(2 * q[1] * q[2] - 2 * q[0] * q[3], 2 * q[0] * q[0] + 2 * q[1] * q[1] - 1);
 
-		deviceQuaternion.multiply(worldTransform);
+		yaw *= radtoDeg;
 
-		return this.getYawPitchRollFromQuaternion(deviceQuaternion);
+		//print the yaw angle
+		console.log("yaw:", yaw.toFixed(2));
+		return yaw;
+	};
+	/**
+	function to calculate the camera local quaternion from the camera world quaternion and robot world quaternion
+
+	The Equation:
+	q_CameraLocal = q_CameraWorld x q_RobotWorld.inverse
+
+	 */
+	var calculateCameraLocalQuaternion = function (q_camW, q_robotW) {
+		var q_camL = new THREE.Quaternion();
+		var q_robotW_Inv = new THREE.Quaternion();
+		q_robotW_Inv.copy(q_robotW);
+		q_robotW_Inv.inverse();
+		q_camL.multiplyQuaternions(q_camW, q_robotW_Inv);
+		return q_camL;
+	};
+	/**
+	function called approximately every 20ms to calculate the robot speed, throttle and steering
+	Return the calculated throttle and steering array
+	 */
+	var calucateRobotSpeed = function () {
+		//calculate the pitch angle of the user body from quaternion
+		var body_pitch = getPitchFromQuaternion(q_BodyWorld);
+		//calculate the yaw angle of the user body from quaternion
+		var body_yaw = getYawFromQuaternion(q_BodyWorld);
+		//calculate the yaw angle of the robot from quaternion
+		var robot_yaw = getYawFromQuaternion(q_RobotWorld);
+		//calculate the yaw angle error from the two previous yaw angles
+		var error_yaw = body_yaw - robot_yaw;
+		//get the two element array that contains data for the serial port
+		var throttle_steering_array = robotSpeedController.getMappedArrayFromInput(body_pitch, error_yaw);
+		//console.log("throttle_steering_array", throttle_steering_array);
+		return throttle_steering_array;
+	};
+	/**
+	function to set the q_CameraWorld, it take an object with w,x,y,z properties
+	this is the aligned and adjusted Quaternion of the head mount display,
+	in this case the Google Cardboard.
+	 */
+	this.setCameraWorldQuaternion = function (q) {
+		if (q === undefined || isNaN(q.x) || isNaN(q.y) || isNaN(q.z) || isNaN(q.w)) {
+			console.log("setCameraWorldQuaternion property check failed!");
+			return;
+		}
+		q_CameraWorld.set(q.x, q.y, q.z, q.w);
 	};
 
+	/**
+	function to set the q_BodyWorld, it take an object with w,x,y,z properties
+	Aligned and adjusted Quaternion of the wearable body tracker,
+	it is placed on upper human body
+	 */
+	this.setBodyWorldQuaternion = function (q) {
+		if (q === undefined || isNaN(q.x) || isNaN(q.y) || isNaN(q.z) || isNaN(q.w)) {
+			console.log("setBodyWorldQuaternion property check failed!");
+			return;
+		}
+		q_BodyWorld.set(q.x, q.y, q.z, q.w);
+	};
+	/**
+	function to set the q_RobotWorld, it take an object with w,x,y,z properties
+	Robot IMU Measured Quaternion
+	Return serial_array for the serial port
+	 */
+	this.setRobotWorldQuaternion = function (q) {
+		if (q === undefined || isNaN(q.x) || isNaN(q.y) || isNaN(q.z) || isNaN(q.w)) {
+			console.log("setRobotWorldQuaternion property check failed!");
+			return;
+		}
+		q_RobotWorld.set(q.x, q.y, q.z, q.w);
+		//TODO: add the function call to do the RobotSpeedControl,
+		//calculate the yaw error and body pitch angles in degree
+		//This is called for every new robot world quaternion change, approximately 50Hz(every 20ms)
+		//need to profile the performance on the target processor, and decide whether we
+		//need to fire a separate process for this
+		var throttle_steering_array = calucateRobotSpeed();
+		var servo_array = this.getServoArray();
+		var serial_array = servo_array.concat(throttle_steering_array);
+		serial_array[5] = 0xFF;
+		var serial_buf = new Buffer(serial_array);
+		console.log("serial_buf:",serial_buf);
+		return serial_buf;
+	};
+
+	/**get the servo array for the serial port, length = 3*/
+	this.getServoArray = function () {
+		q_CameraLocal = calculateCameraLocalQuaternion(q_CameraWorld, q_RobotWorld);
+		var ypr_angles = getYawPitchRollFromQuaternion(q_CameraLocal);
+
+		return [yawServo.setAngle(ypr_angles[0]), yawServo.setAngle(ypr_angles[1]), yawServo.setAngle(ypr_angles[2])];
+	};
+	/**
+	Function generates the buffer for Arduino
+	It combine the servo data and robot throttle, steering data and append the start sign at the beginning
+	 */
+	this.generateSerialPackageBuffer = function () {};
+	/**
+	function to instantiate and set the serial angle map for Yaw, pitch, roll servos
+	parameter "servos" is a 3 x 2 array
+	i.e. servos[0]=[0x20,0xA5] meaning 0x20 is mapped to 0 degree, 0xA5 is mapped to 180 degree
+	for the Yaw servo
+
+	 */
+	var initProcessor = function (servos) {
+		//check the data is valid 3x2 array
+		if (servos === undefined || servos.length !== 3 ||
+			servos[0].length !== 2 ||
+			servos[1].length !== 2 ||
+			servos[2].length !== 2) {
+			console.log("===Servo map data array is invalid!===");
+			console.log("It should be a 3 x 2 integer array.");
+			return;
+		}
+		// Instantiate there servos
+		yawServo = new CameraServo(servos[0][0], servos[0][1]);
+		pitchServo = new CameraServo(servos[1][0], servos[1][1]);
+		rollServo = new CameraServo(servos[2][0], servos[2][1]);
+
+		robotSpeedController = new RobotSpeedControl();
+	};
+	//set the map from the constructor value
+	initProcessor(servosMap);
 };
 // export the class
 module.exports = OrientationProcessor;
