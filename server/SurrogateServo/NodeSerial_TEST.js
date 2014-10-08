@@ -1,7 +1,7 @@
 var serialport = require("serialport");
 var SerialPort = serialport.SerialPort; // localize object constructor
 
-var arduinoPort = new SerialPort("/dev/rfcomm0", {
+var arduinoPort = new SerialPort("/dev/rfcomm1", {
 		baudrate : 115200,
 		parser : serialport.parsers.raw
 	});
