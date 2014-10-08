@@ -1,5 +1,4 @@
 var OrientationProcessor = require("./OrientationProcessor.js");
-var THREE = require("three");
 var controls = new OrientationProcessor();
 
 var serialport = require("serialport");
