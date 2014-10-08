@@ -127,7 +127,7 @@ function OrientationProcessor(servosMap) {
 		//calculate the yaw angle of the robot from quaternion
 		var robot_yaw = getYawFromQuaternion(q_RobotWorld);
 		//calculate the yaw angle error from the two previous yaw angles
-		var error_yaw = body_yaw - robot_yaw;
+		var error_yaw = robot_yaw - body_yaw;
 		//get the two element array that contains data for the serial port
 		var throttle_steering_array = robotSpeedController.getMappedArrayFromInput(body_pitch, error_yaw);
 		//console.log("throttle_steering_array", throttle_steering_array);
