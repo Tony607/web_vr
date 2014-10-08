@@ -51,7 +51,7 @@ wss.on('connection', function (ws) {
 });
 
 console.log("---Try to connect to serial port " + serialportName + "---");
-arduinoPort = new SerialPort("serialportName, {
+arduinoPort = new SerialPort(serialportName, {
 				baudrate : 115200,
 				parser: serialport.parsers.raw//parser : serialport.parsers.readline(" # ")
 			});
