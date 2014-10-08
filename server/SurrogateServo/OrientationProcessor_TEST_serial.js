@@ -58,4 +58,4 @@ var constructQuaternionByBytes = function (bytes_array) {
 	//test the OrientationProcessor
 	controls.setRobotWorldQuaternion(q);
 	console.log("Quaternion:", q);
-}
+};

@@ -54,7 +54,7 @@ function RobotSpeedControl() {
 		//TODO: right now this is equivalent to using a P control with a small Kp gain
 		//Try to multiple a error_yaw with a value > 1 to increase the Kp
 		//Experiment PI/PID control is this is not enough
-		console.log("error_yaw degree:", error_yaw);
+		console.log("error_yaw degree:", error_yaw.toFixed(2));
 		mappedSteering = Math.round(mapValue(error_yaw*2, -180, 180, 0, serialRangeConstant));
 		return mappedSteering;
 	};

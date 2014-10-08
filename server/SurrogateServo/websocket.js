@@ -1,73 +1,106 @@
+var servosMap = [
+	[0x20, 0xa5],
+	[0x20, 0xa5],
+	[0x20, 0xa5]
+];
+var serialportName = "/dev/rfcomm1";
+
 var OrientationProcessor = require("./OrientationProcessor.js");
 var THREE = require("three");
-var controls = new OrientationProcessor();
-
-var clientdeviceorientation;
+var controls = new OrientationProcessor(servosMap);
+var serialport = require("serialport");
+var SerialPort = serialport.SerialPort; // localize object constructor
+/**
+Two aligned quaternion coming from the user,
+first  quaternion:
+Aligned and adjusted Quaternion of the head mount display, in this case the Google Cardboard
+second quaternion:
+Aligned and adjusted Quaternion of the wearable body tracker, it is placed on upper human body
+ */
+var clientQuaternions;
 function crateSerialPortData(array) {
 	var buf = new Buffer(4);
 	buf[0] = 0xFF;
 	for (var i = 1; i < buf.length; i++) {
-		buf[i] = array[i-1];
+		buf[i] = array[i - 1];
 	};
 	return buf;
 }
 var arduinoPort;
-/**
-in arduino yun the default serial port to 32u4 is named ttyATH0
-in Cubie Board 2 + arduino Pro Micro with usb connection,
-the serial port is named ttyACM0
 
-TODO: if needs support other ATmega328 based boards, the usb-serial connection 
-will be named ttyUSB0
-*/
-var serialportName = require("os").hostname()==="Arduino"?"ttyATH0":"ttyUSB0";
-var WebSocketServer = require('ws').Server
-  , wss = new WebSocketServer({port: 8080});
-wss.on('connection', function(ws) {
-    ws.on('message', function(message) {
-		var servoArray;
-        try{
-			clientdeviceorientation = JSON.parse(message);
-		}catch(e){
+var WebSocketServer = require('ws').Server, wss = new WebSocketServer({
+		port : 8080
+	});
+wss.on('connection', function (ws) {
+	ws.on('message', function (message) {
+		try {
+			clientQuaternions = JSON.parse(message);
+		} catch (e) {
 			console.log(e);
 		}
-		if(clientdeviceorientation.length){
-			//try to use the first quaternion, the head tracking
-			var servoArray = controls.getYawPitchRollFromQuaternion(clientdeviceorientation[0]);
+		if (clientQuaternions.length === 2) {
+			//set the two quaternion to the OrientationProcessor module
+			controls.setCameraWorldQuaternion(clientQuaternions[0]);
+			controls.setBodyWorldQuaternion(clientQuaternions[1]);
 		} else {
-			console.log("Unknown orientation format.");
-		}	
-    	if(arduinoPort && !arduinoPort.paused){
-    		var writeBuffer = crateSerialPortData(servoArray);
-    		console.log(writeBuffer);
-    		arduinoPort.write(writeBuffer);
-    	}
-    });
-    ws.send('something');
-});
-
-console.log("---Try to connect to serial port /dev/"+serialportName+"---");
-var serialport = require("serialport");
-var SerialPort = serialport.SerialPort; // localize object constructor
-arduinoPort = new SerialPort("/dev/"+serialportName, {
-		baudrate : 115200,
-		parser: serialport.parsers.raw//parser : serialport.parsers.readline("#")
+			console.log("Unknown format from Websocket. Expect two quaternions");
+		}
 	});
-arduinoPort.on("open", function () {
-	console.log('arduinoPort->open');
-	//console.log(JSON.stringify(arduinoPort, null, 4));
-	/*arduinoPort.write("ls\n", function (err, results) {
-		console.log('err ' + err);
-		console.log('results ' + results);
-	});*/
+	//TODO: might send something to notify the user that the robot is online and status
+	ws.send('something');
 });
 
-arduinoPort.on('data', function (data) {
-	console.log("arduinoPort->data:",data.toString());
-});
-arduinoPort.on('close', function () {
-	console.log('arduinoPort->close');
-});
-arduinoPort.on('error', function () {
-	console.log('arduinoPort->error');
-});
+console.log("---Try to connect to serial port " + serialportName + "---");
+arduinoPort = new SerialPort("serialportName, {
+				baudrate : 115200,
+				parser: serialport.parsers.raw//parser : serialport.parsers.readline(" # ")
+			});
+		arduinoPort.on(" open ", function () {
+			console.log('arduinoPort->open');
+		});
+		arduinoPort.on('data', function (data) {
+			//console.log(" arduinoPort->data ",data);
+			readQuaternionFromBuffer(data);
+		});
+		arduinoPort.on('close', function () {
+			console.log('arduinoPort->close');
+		});
+		arduinoPort.on('error', function () {
+			console.log('arduinoPort->error');
+		});
+		/**
+		Function that read the incoming serial buffer and parse the quaternion data
+		 */
+		var readQuaternionFromBuffer = function (buf) {
+			for (var i = 0; i < buf.length; i++) {
+				if (buf[i] === 0xFF) { //stop sign
+					//copy array
+					quaternion_raw_data = serialPacketBuffer.slice();
+					constructQuaternionByBytes(quaternion_raw_data);
+				} else {
+					//FIFO
+					serialPacketBuffer.shift();
+					serialPacketBuffer[3] = buf[i];
+				}
+			}
+		};
+		/**function that take a x,y,z,w bytes array from Arduino and construct the quaternion object*/
+		var constructQuaternionByBytes = function (bytes_array) {
+			var q = {
+				x : 0,
+				y : 0,
+				z : 0,
+				w : 1
+			};
+			q.x = (bytes_array[0] & 0xFF) / 127 - 1;
+			q.y = (bytes_array[1] & 0xFF) / 127 - 1;
+			q.z = (bytes_array[2] & 0xFF) / 127 - 1;
+			q.w = (bytes_array[3] & 0xFF) / 127 - 1;
+			//test the OrientationProcessor
+			var serial_buf = controls.setRobotWorldQuaternion(q);
+			if(arduinoPort && !arduinoPort.paused){
+				//console.log(" serial_buf ",serial_buf);
+				arduinoPort.write(serial_buf);
+			}
+			console.log(" Quaternion : ", q);
+		};

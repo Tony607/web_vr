@@ -73,7 +73,7 @@ function OrientationProcessor(servosMap) {
 		pitch *= radtoDeg;
 
 		//print the pitch angle
-		console.log("Pitch:", pitch);
+		console.log("Pitch:", pitch.toFixed(2));
 		return pitch;
 	};
 	/**
@@ -97,7 +97,7 @@ function OrientationProcessor(servosMap) {
 		yaw *= radtoDeg;
 
 		//print the yaw angle
-		console.log("yaw:", yaw);
+		console.log("yaw:", yaw.toFixed(2));
 		return yaw;
 	};
 	/**
@@ -130,8 +130,7 @@ function OrientationProcessor(servosMap) {
 		var error_yaw = body_yaw - robot_yaw;
 		//get the two element array that contains data for the serial port
 		var throttle_steering_array = robotSpeedController.getMappedArrayFromInput(body_pitch, error_yaw);
-		//TODO: shall we return this value above or set it as a module wide variable
-		console.log("throttle_steering_array", throttle_steering_array);
+		//console.log("throttle_steering_array", throttle_steering_array);
 		return throttle_steering_array;
 	};
 	/**
