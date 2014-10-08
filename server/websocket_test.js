@@ -11,8 +11,6 @@ wss.on('connection', function (ws) {
 		}
 		if (clientQuaternions.length === 2) {
 			//set the two quaternion to the OrientationProcessor module
-			controls.setCameraWorldQuaternion(clientQuaternions[0]);
-			controls.setBodyWorldQuaternion(clientQuaternions[1]);
 			console.log("clientQuaternions",clientQuaternions);
 		} else {
 			console.log("Unknown format from Websocket. Expect two quaternions");
