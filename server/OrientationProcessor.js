@@ -1,6 +1,8 @@
 var CameraServo = require("./CameraServo.js");
 var RobotSpeedControl = require("./RobotSpeedControl.js");
 var THREE = require("three");
+var serialPacketBuffer = [0, 0, 0, 0]; //length of 4
+var quaternion_raw_data = [0, 0, 0, 0]; //this is the parsed data array
 function OrientationProcessor(servosMap) {
 	//Three servos
 	var yawServo;
