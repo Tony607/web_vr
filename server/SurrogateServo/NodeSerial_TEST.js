@@ -26,7 +26,7 @@ var readQuaternionFromBuffer = function (buf) {
 		if (buf[i] === 0xFF) { //stop sign
 				//copy array
 				quaternion_raw_data = serialPacketBuffer.slice();
-				console.log("Quaternion:",quaternion_raw_data);
+				constructQuaternionByBytes(quaternion_raw_data);
 		} else {
 			//FIFO
 			serialPacketBuffer.shift();
@@ -34,3 +34,11 @@ var readQuaternionFromBuffer = function (buf) {
 		}
 	}
 };
+/**function that take a x,y,z,w bytes array from Arduino and construct the quaternion*/
+var constructQuaternionByBytes = function(bytes_array){
+	var q = [0,0,0,1];
+	for(var i = 0; i < 4; i++){
+		q[i] = (bytes_array[i] & 0xFF) / 127 - 1;
+	}
+	console.log("Quaternion:",q);
+}
