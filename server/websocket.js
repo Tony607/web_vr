@@ -4,7 +4,8 @@ var servosMap = [
 	[0x20, 0xa5]
 ];
 var serialportName = "/dev/rfcomm1";
-
+var serialPacketBuffer = [0, 0, 0, 0]; //length of 4
+var quaternion_raw_data = [0, 0, 0, 0]; //this is the parsed data array
 var OrientationProcessor = require("./OrientationProcessor.js");
 var THREE = require("three");
 var controls = new OrientationProcessor(servosMap);
