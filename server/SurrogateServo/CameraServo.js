@@ -1,5 +1,5 @@
 /**
-CameraServo module to handle one servo instances
+CameraServo module to handle one servo instance
 pass parameter to constructor to set the map or use the setMap() function
 use setAngle() function to get the mapped(rounded) value
 
@@ -35,10 +35,11 @@ function CameraServo(min_map, max_map) {
 		return num < min ? min : (num > max ? max : num);
 	};
 	/**
-	helper function re-maps a number from one range to another. 
+	helper function re-maps a number from one range to another with clamp on output. 
 	*/
 	var mapValue = function (in_value, in_min, in_max, out_min, out_max) {
-		return (in_value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+		var temp_unclampped = (in_value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+		return clamp(temp_unclampped, out_min, out_max);
 	};
 	/**
 	function to calculate the servoAngleMapped angle when new servoAngle is available

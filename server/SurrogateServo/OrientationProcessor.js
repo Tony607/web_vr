@@ -1,10 +1,13 @@
 var CameraServo = require("./CameraServo.js");
+var RobotSpeedControl = require("./RobotSpeedControl.js");
 var THREE = require("three");
 function OrientationProcessor(servosMap) {
 	//Three servos
 	var yawServo;
 	var pitchServo;
 	var rollServo;
+	//RobotSpeedControl instance for calculating throttle and steering data
+	var robotSpeedController;
 	//Camera Local Quaternion
 	var q_CameraLocal = new THREE.Quaternion();
 	//Aligned and adjusted Quaternion of the head mount display, in this case the Google Cardboard
@@ -17,7 +20,7 @@ function OrientationProcessor(servosMap) {
 	var radtoDeg = 180 / Math.PI;
 
 	/**
-	function to get the actual turning angle array(length of 3) for those three servos from the
+	function to get the actual turning angles array(length of 3) for those three servos from the
 	Camera's local Quaternion		(q_CameraLocal)
 	 */
 	var getYawPitchRollFromQuaternion = function (quaternion) {
@@ -50,6 +53,54 @@ function OrientationProcessor(servosMap) {
 	};
 
 	/**
+	function to get the Pitch angle from quaternion
+	 */
+	var getPitchFromQuaternion = function (quaternion) {
+		var pitch;
+		var gx,
+		gy,
+		gz; // estimated gravity direction
+		var q = [quaternion.w,
+			quaternion.x,
+			quaternion.y,
+			quaternion.z];
+
+		gx = 2 * (q[1] * q[3] - q[0] * q[2]);
+		gy = 2 * (q[0] * q[1] + q[2] * q[3]);
+		gz = q[0] * q[0] - q[1] * q[1] - q[2] * q[2] + q[3] * q[3];
+		pitch = Math.atan(gx / Math.sqrt(gy * gy + gz * gz));
+
+		pitch *= radtoDeg;
+
+		//print the pitch angle
+		console.log("Pitch:", pitch);
+		return pitch;
+	};
+	/**
+	function to get the Yaw angle from quaternion
+	 */
+	var getYawFromQuaternion = function (quaternion) {
+		var yaw;
+		var gx,
+		gy,
+		gz; // estimated gravity direction
+		var q = [quaternion.w,
+			quaternion.x,
+			quaternion.y,
+			quaternion.z];
+
+		gx = 2 * (q[1] * q[3] - q[0] * q[2]);
+		gy = 2 * (q[0] * q[1] + q[2] * q[3]);
+		gz = q[0] * q[0] - q[1] * q[1] - q[2] * q[2] + q[3] * q[3];
+		yaw = Math.atan(gy / Math.sqrt(gx * gx + gz * gz));
+
+		yaw *= radtoDeg;
+
+		//print the yaw angle
+		console.log("yaw:", yaw);
+		return yaw;
+	};
+	/**
 	function to calculate the camera local quaternion from the camera world quaternion and robot world quaternion
 
 	The Equation:
@@ -64,7 +115,20 @@ function OrientationProcessor(servosMap) {
 		q_camL.multiplyQuaternions(q_camW, q_robotW_Inv);
 		return q_camL;
 	};
-
+	/**function called approximately every 20ms to calculate the robot speed, throttle and steering*/
+	var calucateRobotSpeed = function () {
+		//calculate the pitch angle of the user body from quaternion
+		var body_pitch = getPitchFromQuaternion(q_BodyWorld);
+		//calculate the yaw angle of the user body from quaternion
+		var body_yaw = getYawFromQuaternion(q_BodyWorld);
+		//calculate the yaw angle of the robot from quaternion
+		var robot_yaw = getYawFromQuaternion(q_RobotWorld);
+		//calculate the yaw angle error from the two previous yaw angles
+		var error_yaw = body_yaw - robot_yaw;
+		//get the two element array that contains data for the serial port
+		var throttle_steering_array = robotSpeedController.getMappedArrayFromInput(body_pitch, error_yaw);
+		//TODO: shall we return this value above or set it as a module wide variable
+	};
 	/**function to set the q_CameraWorld, it take an object with w,x,y,z properties*/
 	this.setCameraWorldQuaternion = function (q) {
 		if (q === undefined || isNaN(q.x) || isNaN(q.y) || isNaN(q.z) || isNaN(q.w)) {
@@ -89,6 +153,12 @@ function OrientationProcessor(servosMap) {
 			return;
 		}
 		q_RobotWorld.set(q.x, q.y, q.z, q.w);
+		//TODO: add the function call to do the RobotSpeedControl,
+		//calculate the yaw error and body pitch angles in degree
+		//This is called for every new robot world quaternion change, approximately 50Hz(every 20ms)
+		//need to profile the performance on the target processor, and decide whether we
+		//need to fire a separate process for this
+		calucateRobotSpeed();
 	};
 
 	/**get the servo array for the serial port, length = 3*/
@@ -98,7 +168,11 @@ function OrientationProcessor(servosMap) {
 
 		return [yawServo.setAngle(ypr_angles[0]), yawServo.setAngle(ypr_angles[1]), yawServo.setAngle(ypr_angles[2])];
 	};
-
+	/**
+	Function generates the buffer for Arduino
+	It combine the servo data and robot throttle, steering data and append the start sign at the beginning
+	*/
+	this.generateSerialPackageBuffer = function () {};
 	/**
 	function to instantiate and set the serial angle map for Yaw, pitch, roll servos
 	parameter "servos" is a 3 x 2 array
@@ -106,7 +180,7 @@ function OrientationProcessor(servosMap) {
 	for the Yaw servo
 
 	 */
-	this.initServos = function (servos) {
+	var initProcessor = function (servos) {
 		//check the data is valid 3x2 array
 		if (servos.length !== 3 ||
 			servos[0].length !== 2 ||
@@ -120,9 +194,11 @@ function OrientationProcessor(servosMap) {
 		yawServo = new CameraServo(servos[0][0], servos[0][1]);
 		pitchServo = new CameraServo(servos[1][0], servos[1][1]);
 		rollServo = new CameraServo(servos[2][0], servos[2][1]);
+
+		robotSpeedController = new RobotSpeedControl();
 	};
 	//set the map from the constructor value
-	this.initServos(servosMap);
+	initProcessor(servosMap);
 };
 // export the class
 module.exports = OrientationProcessor;
