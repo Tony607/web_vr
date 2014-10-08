@@ -92,7 +92,7 @@ function OrientationProcessor(servosMap) {
 		gx = 2 * (q[1] * q[3] - q[0] * q[2]);
 		gy = 2 * (q[0] * q[1] + q[2] * q[3]);
 		gz = q[0] * q[0] - q[1] * q[1] - q[2] * q[2] + q[3] * q[3];
-		yaw = Math.atan(gy / Math.sqrt(gx * gx + gz * gz));
+		yaw = Math.atan2(2 * q[1] * q[2] - 2 * q[0] * q[3], 2 * q[0] * q[0] + 2 * q[1] * q[1] - 1);
 
 		yaw *= radtoDeg;
 
@@ -128,7 +128,7 @@ function OrientationProcessor(servosMap) {
 		//get the two element array that contains data for the serial port
 		var throttle_steering_array = robotSpeedController.getMappedArrayFromInput(body_pitch, error_yaw);
 		//TODO: shall we return this value above or set it as a module wide variable
-		console.log("q_BodyWorld_YPR", getYawPitchRollFromQuaternion(q_RobotWorld));
+		console.log("throttle_steering_array", throttle_steering_array);
 	};
 	/**function to set the q_CameraWorld, it take an object with w,x,y,z properties*/
 	this.setCameraWorldQuaternion = function (q) {
