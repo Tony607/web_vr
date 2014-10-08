@@ -128,7 +128,7 @@ function OrientationProcessor(servosMap) {
 		//get the two element array that contains data for the serial port
 		var throttle_steering_array = robotSpeedController.getMappedArrayFromInput(body_pitch, error_yaw);
 		//TODO: shall we return this value above or set it as a module wide variable
-		console.log("throttle,steering",throttle_steering_array);
+		console.log("throttle,steering", throttle_steering_array);
 	};
 	/**function to set the q_CameraWorld, it take an object with w,x,y,z properties*/
 	this.setCameraWorldQuaternion = function (q) {
@@ -172,7 +172,7 @@ function OrientationProcessor(servosMap) {
 	/**
 	Function generates the buffer for Arduino
 	It combine the servo data and robot throttle, steering data and append the start sign at the beginning
-	*/
+	 */
 	this.generateSerialPackageBuffer = function () {};
 	/**
 	function to instantiate and set the serial angle map for Yaw, pitch, roll servos
@@ -183,7 +183,7 @@ function OrientationProcessor(servosMap) {
 	 */
 	var initProcessor = function (servos) {
 		//check the data is valid 3x2 array
-		if (servos.length !== 3 ||
+		if (servos === undefined || servos.length !== 3 ||
 			servos[0].length !== 2 ||
 			servos[1].length !== 2 ||
 			servos[2].length !== 2) {
