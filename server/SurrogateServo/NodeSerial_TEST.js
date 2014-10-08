@@ -22,7 +22,7 @@ arduinoPort.on('error', function () {
 Function that read the incoming serial buffer and parse the quaternion data
  */
 var readQuaternionFromBuffer = function (buf) {
-	for (var i; i < buf.length; i++) {
+	for (var i = 0; i < buf.length; i++) {
 		if (buf[i] === 0xFF) { //stop sign
 				//copy array
 				quaternion_raw_data = serialPacketBuffer.slice();
