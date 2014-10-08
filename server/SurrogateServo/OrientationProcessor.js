@@ -128,6 +128,7 @@ function OrientationProcessor(servosMap) {
 		//get the two element array that contains data for the serial port
 		var throttle_steering_array = robotSpeedController.getMappedArrayFromInput(body_pitch, error_yaw);
 		//TODO: shall we return this value above or set it as a module wide variable
+		console.log("throttle,steering",throttle_steering_array);
 	};
 	/**function to set the q_CameraWorld, it take an object with w,x,y,z properties*/
 	this.setCameraWorldQuaternion = function (q) {

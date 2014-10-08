@@ -1,3 +1,7 @@
+var OrientationProcessor = require("./OrientationProcessor.js");
+var THREE = require("three");
+var controls = new OrientationProcessor();
+
 var serialport = require("serialport");
 var SerialPort = serialport.SerialPort; // localize object constructor
 var serialPacketBuffer = [0, 0, 0, 0]; //length of 4
@@ -46,5 +50,7 @@ var constructQuaternionByBytes = function (bytes_array) {
 	q.y = (bytes_array[1] & 0xFF) / 127 - 1;
 	q.z = (bytes_array[2] & 0xFF) / 127 - 1;
 	q.w = (bytes_array[3] & 0xFF) / 127 - 1;
+	//test the OrientationProcessor
+	controls.setRobotWorldQuaternion(q);
 	console.log("Quaternion:", q);
 }
