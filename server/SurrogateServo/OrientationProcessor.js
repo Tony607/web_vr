@@ -115,7 +115,10 @@ function OrientationProcessor(servosMap) {
 		q_camL.multiplyQuaternions(q_camW, q_robotW_Inv);
 		return q_camL;
 	};
-	/**function called approximately every 20ms to calculate the robot speed, throttle and steering*/
+	/**
+	function called approximately every 20ms to calculate the robot speed, throttle and steering
+	Return the calculated throttle and steering array
+	 */
 	var calucateRobotSpeed = function () {
 		//calculate the pitch angle of the user body from quaternion
 		var body_pitch = getPitchFromQuaternion(q_BodyWorld);
@@ -129,8 +132,13 @@ function OrientationProcessor(servosMap) {
 		var throttle_steering_array = robotSpeedController.getMappedArrayFromInput(body_pitch, error_yaw);
 		//TODO: shall we return this value above or set it as a module wide variable
 		console.log("throttle_steering_array", throttle_steering_array);
+		return throttle_steering_array;
 	};
-	/**function to set the q_CameraWorld, it take an object with w,x,y,z properties*/
+	/**
+	function to set the q_CameraWorld, it take an object with w,x,y,z properties
+	this is the aligned and adjusted Quaternion of the head mount display,
+	in this case the Google Cardboard.
+	 */
 	this.setCameraWorldQuaternion = function (q) {
 		if (q === undefined || isNaN(q.x) || isNaN(q.y) || isNaN(q.z) || isNaN(q.w)) {
 			console.log("setCameraWorldQuaternion property check failed!");
@@ -139,7 +147,11 @@ function OrientationProcessor(servosMap) {
 		q_CameraWorld.set(q.x, q.y, q.z, q.w);
 	};
 
-	/**function to set the q_BodyWorld, it take an object with w,x,y,z properties*/
+	/**
+	function to set the q_BodyWorld, it take an object with w,x,y,z properties
+	Aligned and adjusted Quaternion of the wearable body tracker,
+	it is placed on upper human body
+	 */
 	this.setBodyWorldQuaternion = function (q) {
 		if (q === undefined || isNaN(q.x) || isNaN(q.y) || isNaN(q.z) || isNaN(q.w)) {
 			console.log("setBodyWorldQuaternion property check failed!");
@@ -147,7 +159,11 @@ function OrientationProcessor(servosMap) {
 		}
 		q_BodyWorld.set(q.x, q.y, q.z, q.w);
 	};
-	/**function to set the q_RobotWorld, it take an object with w,x,y,z properties*/
+	/**
+	function to set the q_RobotWorld, it take an object with w,x,y,z properties
+	Robot IMU Measured Quaternion
+	Return serial_array for the serial port
+	 */
 	this.setRobotWorldQuaternion = function (q) {
 		if (q === undefined || isNaN(q.x) || isNaN(q.y) || isNaN(q.z) || isNaN(q.w)) {
 			console.log("setRobotWorldQuaternion property check failed!");
@@ -159,7 +175,13 @@ function OrientationProcessor(servosMap) {
 		//This is called for every new robot world quaternion change, approximately 50Hz(every 20ms)
 		//need to profile the performance on the target processor, and decide whether we
 		//need to fire a separate process for this
-		calucateRobotSpeed();
+		var throttle_steering_array = calucateRobotSpeed();
+		var servo_array = this.getServoArray();
+		var serial_array = servo_array.concat(throttle_steering_array);
+		serial_array[5] = 0xFF;
+		var serial_buf = new Buffer(serial_array);
+		console.log("serial_buf:",serial_buf);
+		return serial_buf;
 	};
 
 	/**get the servo array for the serial port, length = 3*/

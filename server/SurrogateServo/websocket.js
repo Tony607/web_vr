@@ -2,11 +2,7 @@ var OrientationProcessor = require("./OrientationProcessor.js");
 var THREE = require("three");
 var controls = new OrientationProcessor();
 
-var clientdeviceorientation = {
-	alpha: 0,
-	beta: 0,
-	gamma:0
-};
+var clientdeviceorientation;
 function crateSerialPortData(array) {
 	var buf = new Buffer(4);
 	buf[0] = 0xFF;
@@ -42,7 +38,7 @@ wss.on('connection', function(ws) {
 			console.log("Unknown orientation format.");
 		}	
     	if(arduinoPort && !arduinoPort.paused){
-    		var writeBuffer = crateSerialPortData(servoArray)
+    		var writeBuffer = crateSerialPortData(servoArray);
     		console.log(writeBuffer);
     		arduinoPort.write(writeBuffer);
     	}
