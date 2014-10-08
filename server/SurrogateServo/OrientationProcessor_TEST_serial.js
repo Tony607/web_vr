@@ -1,5 +1,11 @@
+var servosMap = [
+	[0x20, 0xa5],
+	[0x20, 0xa5],
+	[0x20, 0xa5]
+];
+
 var OrientationProcessor = require("./OrientationProcessor.js");
-var controls = new OrientationProcessor();
+var controls = new OrientationProcessor(servosMap);
 
 var serialport = require("serialport");
 var SerialPort = serialport.SerialPort; // localize object constructor
