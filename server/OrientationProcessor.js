@@ -128,6 +128,12 @@ function OrientationProcessor(servosMap) {
 		var robot_yaw = getYawFromQuaternion(q_RobotWorld);
 		//calculate the yaw angle error from the two previous yaw angles
 		var error_yaw = robot_yaw - body_yaw;
+		//if the angles are opposite 			
+		if (error_yaw > 180) {//e.g. robot_yaw = 170, body_yaw = -175
+			error_yaw = error_yaw - 360;
+		} else if (error_yaw < -180) {//e.g. robot_yaw = -170, body_yaw = 175
+			error_yaw = 360 + error_yaw;
+		}
 		//get the two element array that contains data for the serial port
 		var throttle_steering_array = robotSpeedController.getMappedArrayFromInput(body_pitch, error_yaw);
 		//console.log("throttle_steering_array", throttle_steering_array);
@@ -179,7 +185,7 @@ function OrientationProcessor(servosMap) {
 		var serial_array = servo_array.concat(throttle_steering_array);
 		serial_array[5] = 0xFF;
 		var serial_buf = new Buffer(serial_array);
-		console.log("serial_buf:",serial_buf);
+		console.log("serial_buf:", serial_buf);
 		return serial_buf;
 	};
 
