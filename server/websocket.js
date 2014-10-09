@@ -30,7 +30,7 @@ function crateSerialPortData(array) {
 var arduinoPort;
 
 var WebSocketServer = require('ws').Server, wss = new WebSocketServer({
-		port : 8080
+		port : 8089
 	});
 wss.on('connection', function (ws) {
 	ws.on('message', function (message) {
