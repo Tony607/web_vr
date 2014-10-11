@@ -40,7 +40,8 @@ function RobotSpeedControl() {
 	var updateMappedThrottle = function (body_pitch_degree) {
 		//map the value to 0~254 for the serial data
 		//round the number into a integer
-		mappedThrottle = Math.round(mapValue(body_pitch_degree, -90, 90, 0, serialRangeConstant));
+		//note that we reversed the degree from 90->-90
+		mappedThrottle = Math.round(mapValue(body_pitch_degree, 90, -90, 0, serialRangeConstant));
 		return mappedThrottle;
 	};
 	
