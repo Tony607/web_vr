@@ -1,3 +1,6 @@
+////
+//Test case for to phone quaternion and body tracker quaternion to generate the serial buffer
+////
 /**define servo map values
 Yaw, Pitch, Roll servo
 Note: If there is a need to reverse the turning direction of a servo, just switch the two numbers for the servo
@@ -12,19 +15,7 @@ var OrientationProcessor = require("./OrientationProcessor.js");
 var THREE = require("three");
 var controls = new OrientationProcessor(servosMap);
 
-var clientdeviceorientation = {
-	alpha : 0,
-	beta : 0,
-	gamma : 0
-};
-function crateSerialPortData(array) {
-	var buf = new Buffer(4);
-	buf[0] = 0xFF;
-	for (var i = 1; i < buf.length; i++) {
-		buf[i] = array[i - 1];
-	};
-	return buf;
-}
+var clientQuaternions;
 /**
 in arduino yun the default serial port to 32u4 is named ttyATH0
 in Cubie Board 2 + arduino Pro Micro with usb connection,
@@ -39,13 +30,16 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({
 wss.on('connection', function (ws) {
 	ws.on('message', function (message) {
 		try {
-			clientdeviceorientation = JSON.parse(message);
+			clientQuaternions = JSON.parse(message);
 		} catch (e) {
 			console.log(e);
 		}
-		if (clientdeviceorientation.length) {
-			//try to use the first quaternion, the head tracking
-			var servoArray = controls.getYawPitchRollFromQuaternion(clientdeviceorientation[0]);
+		if (clientQuaternions.length === 2) {
+			//set the two quaternion to the OrientationProcessor module
+			controls.setCameraWorldQuaternion(clientQuaternions[0]);
+			controls.setBodyWorldQuaternion(clientQuaternions[1]);
+			var q = {x:0,y:0,z:0,w:1};
+			var serial_buf = controls.setRobotWorldQuaternion(q);
 		} else {
 			console.log("Unknown orientation format.");
 		}

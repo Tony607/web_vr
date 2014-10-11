@@ -36,16 +36,13 @@ function OrientationProcessor(servosMap) {
 		gx = 2 * (q[1] * q[3] - q[0] * q[2]);
 		gy = 2 * (q[0] * q[1] + q[2] * q[3]);
 		gz = q[0] * q[0] - q[1] * q[1] - q[2] * q[2] + q[3] * q[3];
-		ypr[0] = Math.atan(gx / Math.sqrt(gy * gy + gz * gz));
 		ypr[1] = Math.atan(gy / Math.sqrt(gx * gx + gz * gz));
-		ypr[2] = Math.atan2(2 * q[1] * q[2] - 2 * q[0] * q[3], 2 * q[0] * q[0] + 2 * q[1] * q[1] - 1);
+		ypr[0] = Math.atan2(2 * q[1] * q[2] - 2 * q[0] * q[3], 2 * q[0] * q[0] + 2 * q[1] * q[1] - 1);
+		ypr[2] = Math.atan(gx / Math.sqrt(gy * gy + gz * gz));
 
 		ypr[0] *= radtoDeg;
 		ypr[1] *= radtoDeg;
 		ypr[2] *= radtoDeg;
-		var tmp = ypr[1];
-		ypr[1] = ypr[0];
-		ypr[0] = tmp;
 
 		//print the angles
 		console.log("angles:", ypr[0].toFixed(2), ypr[1].toFixed(2), ypr[2].toFixed(2));

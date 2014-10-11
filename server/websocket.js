@@ -70,14 +70,14 @@ arduinoPort = new SerialPort(serialportName, {
 			console.log('arduinoPort->error');
 		});
 		/**
-		Function that read the incoming serial buffer and parse the quaternion data
+		Function that read the incoming serial buffer and parse the quaternion data 
 		 */
 		var readQuaternionFromBuffer = function (buf) {
 			for (var i = 0; i < buf.length; i++) {
 				if (buf[i] === 0xFF) { //stop sign
 					//copy array
 					quaternion_raw_data = serialPacketBuffer.slice();
-					constructQuaternionByBytes(quaternion_raw_data);
+					handleSerialComm(quaternion_raw_data);
 				} else {
 					//FIFO
 					serialPacketBuffer.shift();
@@ -85,8 +85,11 @@ arduinoPort = new SerialPort(serialportName, {
 				}
 			}
 		};
-		/**function that take a x,y,z,w bytes array from Arduino and construct the quaternion object*/
-		var constructQuaternionByBytes = function (bytes_array) {
+		/**function that take a x,y,z,w bytes array coming from Arduino serial port and construct the quaternion object,
+			call the OrientationProcessor to calculate and generate the output serial buffer,
+			finally send this buffer to serial port
+		*/
+		var handleSerialComm = function (bytes_array) {
 			var q = {
 				x : 0,
 				y : 0,
