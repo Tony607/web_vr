@@ -191,7 +191,7 @@ function OrientationProcessor(servosMap) {
 		q_CameraLocal = calculateCameraLocalQuaternion(q_CameraWorld, q_RobotWorld);
 		var ypr_angles = getYawPitchRollFromQuaternion(q_CameraLocal);
 
-		return [yawServo.setAngle(ypr_angles[0]), yawServo.setAngle(ypr_angles[1]), yawServo.setAngle(ypr_angles[2])];
+		return [yawServo.setAngle(ypr_angles[0]), pitchServo.setAngle(ypr_angles[1]), rollServo.setAngle(ypr_angles[2])];
 	};
 	/**
 	Function generates the buffer for Arduino
