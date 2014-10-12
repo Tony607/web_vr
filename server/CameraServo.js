@@ -74,7 +74,7 @@ function CameraServo(mid_map, max_map, min_limited_map) {
 
 	 */
 	this.setMap = function (mid, max, min_limited) {
-		if (min !== undefined && max !== undefined) {
+		if (mid !== undefined && max !== undefined && min_limited !== undefined) {
 			mapToDegree_90 = clamp(mid, 0, 180);
 			mapToDegree_180 = clamp(max, 0, 180);
 			mapToDegree_min_limited = clamp(min_limited, 0, 180);
