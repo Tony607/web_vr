@@ -46,7 +46,7 @@ function CameraServo(min_map, max_map) {
 	 */
 	var updateMappedAngle = function () {
 		//round the number into a integer
-		servoAngleMapped = Math.round(mapValue(servoAngle, 0, 180, mapToDegree_0, mapToDegree_180));
+		servoAngleMapped = Math.round(mapValue(servoAngle, -90, 90, mapToDegree_0, mapToDegree_180));
 	};
 	/**
 	function to set the servo actual turning angle from 0~180 degree
