@@ -216,9 +216,9 @@ function OrientationProcessor(servosMap) {
 			return;
 		}
 		// Instantiate there servos
-		yawServo = new CameraServo(servos[0][0], servos[0][1]);
-		pitchServo = new CameraServo(servos[1][0], servos[1][1]);
-		rollServo = new CameraServo(servos[2][0], servos[2][1]);
+		yawServo = new CameraServo(servos[0][0], servos[0][1], servos[0][2]);
+		pitchServo = new CameraServo(servos[1][0], servos[1][1], servos[1][2]);
+		rollServo = new CameraServo(servos[2][0], servos[2][1], servos[2][2]);
 
 		robotSpeedController = new RobotSpeedControl();
 	};
