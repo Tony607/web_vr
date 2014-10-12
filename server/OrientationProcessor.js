@@ -208,11 +208,11 @@ function OrientationProcessor(servosMap) {
 	var initProcessor = function (servos) {
 		//check the data is valid 3x2 array
 		if (servos === undefined || servos.length !== 3 ||
-			servos[0].length !== 2 ||
-			servos[1].length !== 2 ||
-			servos[2].length !== 2) {
+			servos[0].length !== 3 ||
+			servos[1].length !== 3 ||
+			servos[2].length !== 3) {
 			console.log("===Servo map data array is invalid!===");
-			console.log("It should be a 3 x 2 integer array.");
+			console.log("It should be a 3 x 3 integer array.");
 			return;
 		}
 		// Instantiate there servos
