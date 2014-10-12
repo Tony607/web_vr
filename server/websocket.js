@@ -1,9 +1,9 @@
 //configure data for three servos,(Yaw, Pitch, Roll)
-//middle(0 degree), max(90 degree), min(angle limited by gimbal physical layout> -90 degree)
+//middle(0 degree), max(90 degree), min(angle limited by gimbal physical layout> -90 degree), need reverse
 var servosMap = [
-	[0x59, 0x9d, 0x20],
-	[0x41, 0x86, 0x31],
-	[0x60, 0xa3, 0x20]
+	[0x59, 0x9d, 0x20, true],
+	[0x41, 0x86, 0x31, false],
+	[0x60, 0xa3, 0x20, false]
 ];
 var serialportName = "/dev/rfcomm1";
 var serialPacketBuffer = [0, 0, 0, 0]; //length of 4

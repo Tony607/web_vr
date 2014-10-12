@@ -208,17 +208,17 @@ function OrientationProcessor(servosMap) {
 	var initProcessor = function (servos) {
 		//check the data is valid 3x2 array
 		if (servos === undefined || servos.length !== 3 ||
-			servos[0].length !== 3 ||
-			servos[1].length !== 3 ||
-			servos[2].length !== 3) {
+			servos[0].length !== 4 ||
+			servos[1].length !== 4 ||
+			servos[2].length !== 4) {
 			console.log("===Servo map data array is invalid!===");
-			console.log("It should be a 3 x 3 integer array.");
+			console.log("It should be a 3 x 4 integer array.");
 			return;
 		}
 		// Instantiate there servos
-		yawServo = new CameraServo(servos[0][0], servos[0][1], servos[0][2]);
-		pitchServo = new CameraServo(servos[1][0], servos[1][1], servos[1][2]);
-		rollServo = new CameraServo(servos[2][0], servos[2][1], servos[2][2]);
+		yawServo = new CameraServo(servos[0][0], servos[0][1], servos[0][2], servos[0][3]);
+		pitchServo = new CameraServo(servos[1][0], servos[1][1], servos[1][2], servos[1][3]);
+		rollServo = new CameraServo(servos[2][0], servos[2][1], servos[2][2], servos[2][3]);
 
 		robotSpeedController = new RobotSpeedControl();
 	};

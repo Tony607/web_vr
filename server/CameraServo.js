@@ -15,7 +15,7 @@ var yawServo = new CameraServo(0x20,0xa5);
 //get the mapped value for 90 degree, in this case it is 99
 var mappedValue = yawServo.setAngle(90);
 
-*/
+ */
 function CameraServo(mid_map, max_map, min_limited_map) {
 
 	//the mapped min value(90 degree)
@@ -24,28 +24,29 @@ function CameraServo(mid_map, max_map, min_limited_map) {
 	var mapToDegree_180;
 	//the mapped min value limited by physical layout
 	var mapToDegree_min_limited;
+	//the angle need reverse before the mapping calculation
+	var mapNeed_reverse;
 	//the actual turning angle of the servo
 	var servoAngle;
 	//the mapped angle data to send through the serial port
 	var servoAngleMapped;
-	
 
 	/**
 	helper function to clamp a number between two values
-	*/
+	 */
 	var clamp = function (num, min, max) {
 		return num < min ? min : (num > max ? max : num);
 	};
 	/**
-	helper function re-maps a number from one range to another without clamp on output. 
-	*/
+	helper function re-maps a number from one range to another without clamp on output.
+	 */
 	var mapUnlimited = function (in_value, in_min, in_max, out_min, out_max) {
 		var temp_unclampped = (in_value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 		return temp_unclampped;
 	};
 	/**
-	helper function re-maps a number from one range to another with clamp on output. 
-	*/
+	helper function re-maps a number from one range to another with clamp on output.
+	 */
 	var mapBetween = function (in_value, in_min, in_max, out_min, out_max) {
 		var temp_unclampped = (in_value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 		return clamp(temp_unclampped, out_min, out_max);
@@ -55,16 +56,21 @@ function CameraServo(mid_map, max_map, min_limited_map) {
 	 */
 	var updateMappedAngle = function () {
 		//round the number into a integer
-		servoAngleMapped = Math.round(mapUnlimited(servoAngle, 0, -90, mapToDegree_90, mapToDegree_180));
+		servoAngleMapped = Math.round(mapUnlimited(servoAngle, 0, 90, mapToDegree_90, mapToDegree_180));
 		//clamp the mapped angle by physical layout
 		servoAngleMapped = clamp(servoAngleMapped, mapToDegree_min_limited, mapToDegree_180);
 	};
 	/**
 	function to set the servo actual turning angle from 0~180 degree
 	the return value is the mapped servo angle for serial port
-	*/
+	 */
 	this.setAngle = function (angle) {
-		servoAngle = angle;
+
+		if (mapNeed_reverse) {
+			servoAngle = -angle;
+		} else {
+			servoAngle = angle;
+		}
 		updateMappedAngle();
 		return servoAngleMapped;
 	};
@@ -73,11 +79,12 @@ function CameraServo(mid_map, max_map, min_limited_map) {
 	i.e. setMap(0x20,0xA5); 0x20 is mapped to 0 degree, 0xA5 is mapped to 180 degree
 
 	 */
-	this.setMap = function (mid, max, min_limited) {
+	this.setMap = function (mid, max, min_limited, need_reverse) {
 		if (mid !== undefined && max !== undefined && min_limited !== undefined) {
 			mapToDegree_90 = clamp(mid, 0, 180);
 			mapToDegree_180 = clamp(max, 0, 180);
 			mapToDegree_min_limited = clamp(min_limited, 0, 180);
+			mapNeed_reverse = need_reverse;
 		}
 	};
 
