@@ -16,7 +16,7 @@ var yawServo = new CameraServo(0x20,0xa5);
 var mappedValue = yawServo.setAngle(90);
 
  */
-function CameraServo(mid_map, max_map, min_limited_map) {
+function CameraServo(mid_map, max_map, min_limited_map, need_reverse_map) {
 
 	//the mapped min value(90 degree)
 	var mapToDegree_90;
@@ -89,7 +89,7 @@ function CameraServo(mid_map, max_map, min_limited_map) {
 	};
 
 	//set the map from the constructor value
-	this.setMap(mid_map, max_map, min_limited_map);
+	this.setMap(mid_map, max_map, min_limited_map, need_reverse_map);
 };
 // export the class
 module.exports = CameraServo;
