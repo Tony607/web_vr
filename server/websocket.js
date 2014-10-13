@@ -6,7 +6,7 @@ var servosMap = [
 	[0x5c, 0x9e, 0x1e, false]
 ];
 var serialportName = "/dev/rfcomm1";
-var serialPacketBuffer = [0, 0, 0, 0]; //length of 4
+var serialPacketBufferArray = [0, 0, 0, 0]; //length of 4
 var quaternion_raw_data = [0, 0, 0, 0]; //this is the parsed data array
 var OrientationProcessor = require("./OrientationProcessor.js");
 var THREE = require("three");
@@ -53,14 +53,14 @@ wss.on('connection', function (ws) {
 	ws.send('something');
 });
 /**
-function to parse the quaternions array from websocket bytes array buffer coming from 
+function to parse the quaternions array from websocket bytes array buffer coming from
 Android, each quaternion take 4 bytes, x,y,z,w
 -1~1 is mapped between 0x00~0xFE in bytes,
-e.g. If the buffer length is 8, then the first 4 bytes correspond to the head(camear world) 
+e.g. If the buffer length is 8, then the first 4 bytes correspond to the head(camear world)
 Quaternion, the next 4 bytes correspond to the first body node(the body world) Quaternion
 
 parameter: Buffer with length is a multiple of 4
-*/
+ */
 var getQuaternionsFromBuffer = function (bytesBuffer) {
 	quaternions = [];
 	var tmp_buffer = new Buffer(4);
@@ -105,15 +105,35 @@ arduinoPort.on('error', function () {
 Function that read the incoming serial buffer and parse the quaternion data
  */
 var readQuaternionFromBuffer = function (buf) {
-	for (var i = 0; i < buf.length; i++) {
+	var i = 0;
+	//if the buffer is too long just use the last(latest) pack
+	if (buf.length >= 9) { //9 = 5*2-1(1 byte less than two pack size)
+		//read the buffer from the last byte, and find the first occurrence of 0xFF
+		for (i = buf.length - 1; i >= 0; i--) {
+			if (buf[i] === 0xFF) { //found the latest stop sign in index i of the big buffer
+				//slice out the last package with length of 4(trimmed out the stop sign)
+				//because we just need the 4 bytes to construct the quaternion
+				buf = buf.slice(i - 4, i); 
+				//shift the most latest incomplete pack to the serialPacketBufferArray
+				//if any bytes exist after the stop sign
+				for (var k = i+1; k<buf.length-1; k++){					
+					serialPacketBufferArray.shift();
+					serialPacketBufferArray[3] = buf[k];
+				}
+				handleSerialComm(buf);
+				return;//done with the big buffer
+			} 
+		}
+	}
+	for (i = 0; i < buf.length; i++) {
 		if (buf[i] === 0xFF) { //stop sign
 			//copy array
-			quaternion_raw_data = serialPacketBuffer.slice();
+			quaternion_raw_data = serialPacketBufferArray.slice();
 			handleSerialComm(quaternion_raw_data);
 		} else {
 			//FIFO
-			serialPacketBuffer.shift();
-			serialPacketBuffer[3] = buf[i];
+			serialPacketBufferArray.shift();
+			serialPacketBufferArray[3] = buf[i];
 		}
 	}
 };
