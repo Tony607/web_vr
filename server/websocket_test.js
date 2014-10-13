@@ -5,17 +5,33 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({
 wss.on('connection', function (ws) {
 	ws.on('message', function (message) {
 		try {
-			clientQuaternions = JSON.parse(message);
+			console.log("message", message);
+			getQuaternionsFromBuffer(message);
 		} catch (e) {
 			console.log(e);
 		}
-		if (clientQuaternions.length === 2) {
-			//set the two quaternion to the OrientationProcessor module
-			console.log("clientQuaternions",clientQuaternions);
-		} else {
-			console.log("Unknown format from Websocket. Expect two quaternions");
-		}
 	});
-	//TODO: might send something to notify the user that the robot is online and status
 	ws.send('something');
 });
+
+var getQuaternionsFromBuffer = function (bytesBuffer) {
+	quaternions = [];
+	var tmp_buffer = new Buffer(4);
+	var numberOfQuaternions = bytesBuffer.length / 4;
+	for (var i = 0; i < numberOfQuaternions; i++) {
+		//copy one quaternion's buffer section
+		bytesBuffer.copy(tmp_buffer, 0, i * 4, i * 4 + 4);
+		var q = {
+			x : 0,
+			y : 0,
+			z : 0,
+			w : 1
+		};
+		q.x = (tmp_buffer[0] & 0xFF) / 127 - 1;
+		q.y = (tmp_buffer[1] & 0xFF) / 127 - 1;
+		q.z = (tmp_buffer[2] & 0xFF) / 127 - 1;
+		q.w = (tmp_buffer[3] & 0xFF) / 127 - 1;
+		quaternions[i] = q;
+	}
+	return quaternions;
+};

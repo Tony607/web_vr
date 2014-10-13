@@ -37,7 +37,7 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({
 wss.on('connection', function (ws) {
 	ws.on('message', function (message) {
 		try {
-			clientQuaternions = JSON.parse(message);
+			clientQuaternions = getQuaternionsFromBuffer(message);
 		} catch (e) {
 			console.log(e);
 		}
@@ -52,61 +52,91 @@ wss.on('connection', function (ws) {
 	//TODO: might send something to notify the user that the robot is online and status
 	ws.send('something');
 });
+/**
+function to parse the quaternions array from websocket bytes array buffer coming from 
+Android, each quaternion take 4 bytes, x,y,z,w
+-1~1 is mapped between 0x00~0xFE in bytes,
+e.g. If the buffer length is 8, then the first 4 bytes correspond to the head(camear world) 
+Quaternion, the next 4 bytes correspond to the first body node(the body world) Quaternion
+
+parameter: Buffer with length is a multiple of 4
+*/
+var getQuaternionsFromBuffer = function (bytesBuffer) {
+	quaternions = [];
+	var tmp_buffer = new Buffer(4);
+	var numberOfQuaternions = bytesBuffer.length / 4;
+	for (var i = 0; i < numberOfQuaternions; i++) {
+		//copy one quaternion's buffer section
+		bytesBuffer.copy(tmp_buffer, 0, i * 4, i * 4 + 4);
+		var q = {
+			x : 0,
+			y : 0,
+			z : 0,
+			w : 1
+		};
+		q.x = (tmp_buffer[0] & 0xFF) / 127 - 1;
+		q.y = (tmp_buffer[1] & 0xFF) / 127 - 1;
+		q.z = (tmp_buffer[2] & 0xFF) / 127 - 1;
+		q.w = (tmp_buffer[3] & 0xFF) / 127 - 1;
+		quaternions[i] = q;
+	}
+	return quaternions;
+};
 
 console.log("---Try to connect to serial port " + serialportName + "---");
 arduinoPort = new SerialPort(serialportName, {
-				baudrate : 115200,
-				parser: serialport.parsers.raw//parser : serialport.parsers.readline(" # ")
-			});
-		arduinoPort.on(" open ", function () {
-			console.log('arduinoPort->open');
-		});
-		arduinoPort.on('data', function (data) {
-			//console.log(" arduinoPort->data ",data);
-			readQuaternionFromBuffer(data);
-		});
-		arduinoPort.on('close', function () {
-			console.log('arduinoPort->close');
-		});
-		arduinoPort.on('error', function () {
-			console.log('arduinoPort->error');
-		});
-		/**
-		Function that read the incoming serial buffer and parse the quaternion data 
-		 */
-		var readQuaternionFromBuffer = function (buf) {
-			for (var i = 0; i < buf.length; i++) {
-				if (buf[i] === 0xFF) { //stop sign
-					//copy array
-					quaternion_raw_data = serialPacketBuffer.slice();
-					handleSerialComm(quaternion_raw_data);
-				} else {
-					//FIFO
-					serialPacketBuffer.shift();
-					serialPacketBuffer[3] = buf[i];
-				}
-			}
-		};
-		/**function that take a x,y,z,w bytes array coming from Arduino serial port and construct the quaternion object,
-			call the OrientationProcessor to calculate and generate the output serial buffer,
-			finally send this buffer to serial port
-		*/
-		var handleSerialComm = function (bytes_array) {
-			var q = {
-				x : 0,
-				y : 0,
-				z : 0,
-				w : 1
-			};
-			q.x = (bytes_array[0] & 0xFF) / 127 - 1;
-			q.y = (bytes_array[1] & 0xFF) / 127 - 1;
-			q.z = (bytes_array[2] & 0xFF) / 127 - 1;
-			q.w = (bytes_array[3] & 0xFF) / 127 - 1;
-			//test the OrientationProcessor
-			var serial_buf = controls.setRobotWorldQuaternion(q);
-			if(arduinoPort && !arduinoPort.paused){
-				//console.log(" serial_buf ",serial_buf);
-				arduinoPort.write(serial_buf);
-			}
-			console.log(" Quaternion : ", q);
-		};
+		baudrate : 115200,
+		parser : serialport.parsers.raw //parser : serialport.parsers.readline(" # ")
+	});
+arduinoPort.on(" open ", function () {
+	console.log('arduinoPort->open');
+});
+arduinoPort.on('data', function (data) {
+	//console.log(" arduinoPort->data ",data);
+	readQuaternionFromBuffer(data);
+});
+arduinoPort.on('close', function () {
+	console.log('arduinoPort->close');
+});
+arduinoPort.on('error', function () {
+	console.log('arduinoPort->error');
+});
+/**
+Function that read the incoming serial buffer and parse the quaternion data
+ */
+var readQuaternionFromBuffer = function (buf) {
+	for (var i = 0; i < buf.length; i++) {
+		if (buf[i] === 0xFF) { //stop sign
+			//copy array
+			quaternion_raw_data = serialPacketBuffer.slice();
+			handleSerialComm(quaternion_raw_data);
+		} else {
+			//FIFO
+			serialPacketBuffer.shift();
+			serialPacketBuffer[3] = buf[i];
+		}
+	}
+};
+/**function that take a x,y,z,w bytes array coming from Arduino serial port and construct the quaternion object,
+call the OrientationProcessor to calculate and generate the output serial buffer,
+finally send this buffer to serial port
+ */
+var handleSerialComm = function (bytes_array) {
+	var q = {
+		x : 0,
+		y : 0,
+		z : 0,
+		w : 1
+	};
+	q.x = (bytes_array[0] & 0xFF) / 127 - 1;
+	q.y = (bytes_array[1] & 0xFF) / 127 - 1;
+	q.z = (bytes_array[2] & 0xFF) / 127 - 1;
+	q.w = (bytes_array[3] & 0xFF) / 127 - 1;
+	//test the OrientationProcessor
+	var serial_buf = controls.setRobotWorldQuaternion(q);
+	if (arduinoPort && !arduinoPort.paused) {
+		//console.log(" serial_buf ",serial_buf);
+		arduinoPort.write(serial_buf);
+	}
+	console.log(" Quaternion : ", q);
+};
