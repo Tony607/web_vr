@@ -3,7 +3,7 @@
 var servosMap = [
 	[0x59, 0x9d, 0x20, true],
 	[0x41, 0x86, 0x31, true],
-	[0x60, 0xa3, 0x20, false]
+	[0x5c, 0x9e, 0x1e, false]
 ];
 var serialportName = "/dev/rfcomm1";
 var serialPacketBuffer = [0, 0, 0, 0]; //length of 4

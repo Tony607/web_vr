@@ -147,7 +147,10 @@ function OrientationProcessor(servosMap) {
 			console.log("setCameraWorldQuaternion property check failed!");
 			return;
 		}
-		q_CameraWorld.set(q.x, q.y, q.z, q.w);
+		//
+		//q_CameraWorld.set(q.x, q.y, q.z, q.w);
+		//q_CameraWorld.set(q.y, -q.x, q.z, q.w);
+		q_CameraWorld.set(q.y, q.z,q.x, q.w);//apply when phone is flipped 90 degree (VR mode)
 	};
 
 	/**
