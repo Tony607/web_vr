@@ -109,7 +109,8 @@ function OrientationProcessor(servosMap) {
 		var q_robotW_Inv = new THREE.Quaternion();
 		q_robotW_Inv.copy(q_robotW);
 		q_robotW_Inv.inverse();
-		q_camL.multiplyQuaternions(q_camW, q_robotW_Inv);
+		//TODO: try switching the order of multiply
+		q_camL.multiplyQuaternions(q_robotW_Inv,q_camW );
 		return q_camL;
 	};
 	/**
