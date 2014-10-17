@@ -44,8 +44,6 @@ function OrientationProcessor(servosMap) {
 		ypr[1] *= radtoDeg;
 		ypr[2] *= radtoDeg;
 
-		//print the angles
-		console.log("angles:", ypr[0].toFixed(2), ypr[1].toFixed(2), ypr[2].toFixed(2));
 		return ypr;
 	};
 
@@ -69,8 +67,6 @@ function OrientationProcessor(servosMap) {
 
 		pitch *= radtoDeg;
 
-		//print the pitch angle
-		console.log("Pitch:", pitch.toFixed(2));
 		return pitch;
 	};
 	/**
@@ -93,9 +89,28 @@ function OrientationProcessor(servosMap) {
 
 		yaw *= radtoDeg;
 
-		//print the yaw angle
-		console.log("yaw:", yaw.toFixed(2));
 		return yaw;
+	};
+	/**
+	function to get the Roll angle from quaternion
+	 */
+	var getRollFromQuaternion = function (quaternion) {
+		var roll;
+		var gx,
+		gy,
+		gz; // estimated gravity direction
+		var q = [quaternion.w,
+			quaternion.x,
+			quaternion.y,
+			quaternion.z];
+
+		gx = 2 * (q[1] * q[3] - q[0] * q[2]);
+		gy = 2 * (q[0] * q[1] + q[2] * q[3]);
+		gz = q[0] * q[0] - q[1] * q[1] - q[2] * q[2] + q[3] * q[3];
+		roll = Math.atan(gy / Math.sqrt(gx * gx + gz * gz));
+
+		roll *= radtoDeg;
+		return roll;
 	};
 	/**
 	function to calculate the camera local quaternion from the camera world quaternion and robot world quaternion
@@ -120,8 +135,14 @@ function OrientationProcessor(servosMap) {
 	var calucateRobotSpeed = function () {
 		//calculate the pitch angle of the user body from quaternion
 		var body_pitch = getPitchFromQuaternion(q_BodyWorld);
-		//calculate the yaw angle of the user body from quaternion
-		var body_yaw = getYawFromQuaternion(q_BodyWorld);
+		//print the pitch angle
+		console.log("user body_pitch:", body_pitch.toFixed(2));
+		//calculate the yaw angle of the user body from quaternion, note that the body tracker
+		//is mounted so that the x axis is pointing up, z axis point back, y axis point right
+		//so the x, z axis is swapped, so does the Yaw(z) and Roll(x), that is why we are 
+		//calling "getRollFromQuaternion" to actually get the yaw angle
+		var body_yaw = getRollFromQuaternion(q_BodyWorld);
+		console.log("body_yaw:", body_yaw.toFixed(2));
 		//calculate the yaw angle of the robot from quaternion
 		var robot_yaw = getYawFromQuaternion(q_RobotWorld);
 		//calculate the yaw angle error from the two previous yaw angles
@@ -176,17 +197,14 @@ function OrientationProcessor(servosMap) {
 			return;
 		}
 		q_RobotWorld.set(q.x, q.y, q.z, q.w);
-		//TODO: add the function call to do the RobotSpeedControl,
 		//calculate the yaw error and body pitch angles in degree
 		//This is called for every new robot world quaternion change, approximately 50Hz(every 20ms)
-		//need to profile the performance on the target processor, and decide whether we
-		//need to fire a separate process for this
 		var throttle_steering_array = calucateRobotSpeed();
 		var servo_array = this.getServoArray();
 		var serial_array = servo_array.concat(throttle_steering_array);
 		serial_array[5] = 0xFF;
 		var serial_buf = new Buffer(serial_array);
-		console.log("serial_buf:", serial_buf);
+		//console.log("serial_buf:", serial_buf);
 		return serial_buf;
 	};
 
@@ -195,6 +213,8 @@ function OrientationProcessor(servosMap) {
 		q_CameraLocal = calculateCameraLocalQuaternion(q_CameraWorld, q_RobotWorld);
 		var ypr_angles = getYawPitchRollFromQuaternion(q_CameraLocal);
 
+		//print the angles
+		console.log("camera Local ypr:", ypr_angles[0].toFixed(2), ypr_angles[1].toFixed(2), ypr_angles[2].toFixed(2));
 		return [yawServo.setAngle(ypr_angles[0]), pitchServo.setAngle(ypr_angles[1]), rollServo.setAngle(ypr_angles[2])];
 	};
 	/**
