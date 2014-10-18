@@ -16,7 +16,9 @@ function OrientationProcessor(servosMap) {
 	var q_BodyWorld = new THREE.Quaternion();
 	//Robot IMU Measured Quaternion
 	var q_RobotWorld = new THREE.Quaternion();
-
+	//Euler anlge object of User body world, set by q_BodyWorld quaternion
+	var euler_BodyWorld = new THREE.Euler( 0, 0, 0, 'XYZ' );
+	
 	var radtoDeg = 180 / Math.PI;
 
 	/**
@@ -133,12 +135,15 @@ function OrientationProcessor(servosMap) {
 	Return the calculated throttle and steering array
 	 */
 	var calucateRobotSpeed = function () {
+		euler_BodyWorld.setFromQuaternion(q_BodyWorld);
+		var body_pitch = euler_BodyWorld.y*radtoDeg;
+		var body_yaw = euler_BodyWorld.y*radtoDeg;
 		//calculate the pitch angle of the user body from quaternion
-		var body_pitch = getPitchFromQuaternion(q_BodyWorld);
+		//var body_pitch = getPitchFromQuaternion(q_BodyWorld);
 		//print the pitch angle
 		console.log("user body_pitch:", body_pitch.toFixed(2));
 		//calculate the yaw angle of the user body from quaternion
-		var body_yaw = getYawFromQuaternion(q_BodyWorld);
+		//var body_yaw = getYawFromQuaternion(q_BodyWorld);
 		console.log("body_yaw:", body_yaw.toFixed(2));
 		//calculate the yaw angle of the robot from quaternion
 		var robot_yaw = getYawFromQuaternion(q_RobotWorld);
@@ -211,7 +216,7 @@ function OrientationProcessor(servosMap) {
 		var ypr_angles = getYawPitchRollFromQuaternion(q_CameraLocal);
 
 		//print the angles
-		console.log("camera Local ypr:", ypr_angles[0].toFixed(2), ypr_angles[1].toFixed(2), ypr_angles[2].toFixed(2));
+		//console.log("camera Local ypr:", ypr_angles[0].toFixed(2), ypr_angles[1].toFixed(2), ypr_angles[2].toFixed(2));
 		return [yawServo.setAngle(ypr_angles[0]), pitchServo.setAngle(ypr_angles[1]), rollServo.setAngle(ypr_angles[2])];
 	};
 	/**
