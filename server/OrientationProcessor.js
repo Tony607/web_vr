@@ -135,15 +135,10 @@ function OrientationProcessor(servosMap) {
 	var calucateRobotSpeed = function () {
 		//calculate the pitch angle of the user body from quaternion
 		var body_pitch = getPitchFromQuaternion(q_BodyWorld);
-		//reverse the pitch angle
-		body_pitch = -body_pitch;
 		//print the pitch angle
 		console.log("user body_pitch:", body_pitch.toFixed(2));
-		//calculate the yaw angle of the user body from quaternion, note that the body tracker
-		//is mounted so that the x axis is pointing up, z axis point back, y axis point right
-		//so the x, z axis is swapped, so does the Yaw(z) and Roll(x), that is why we are 
-		//calling "getRollFromQuaternion" to actually get the yaw angle
-		var body_yaw = getRollFromQuaternion(q_BodyWorld);
+		//calculate the yaw angle of the user body from quaternion
+		var body_yaw = getYawFromQuaternion(q_BodyWorld);
 		console.log("body_yaw:", body_yaw.toFixed(2));
 		//calculate the yaw angle of the robot from quaternion
 		var robot_yaw = getYawFromQuaternion(q_RobotWorld);
