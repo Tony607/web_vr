@@ -136,7 +136,7 @@ function OrientationProcessor(servosMap) {
 	 */
 	var calucateRobotSpeed = function () {
 		euler_BodyWorld.setFromQuaternion(q_BodyWorld);
-		var body_pitch = euler_BodyWorld.y*radtoDeg;
+		var body_pitch = -euler_BodyWorld.y*radtoDeg;
 		var body_yaw = euler_BodyWorld.x*radtoDeg;
 		//calculate the pitch angle of the user body from quaternion
 		//var body_pitch = getPitchFromQuaternion(q_BodyWorld);
