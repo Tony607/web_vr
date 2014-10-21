@@ -16,7 +16,7 @@ var yawServo = new CameraServo(0x20,0xa5);
 var mappedValue = yawServo.setAngle(90);
 
  */
-function CameraServo(mid_map, max_map, min_limited_map, need_reverse_map) {
+function CameraServo(mid_map, max_map, min_limited_map, need_reverse_map, filter_gain) {
 
 	//the mapped min value(90 degree)
 	var mapToDegree_90;
@@ -30,7 +30,10 @@ function CameraServo(mid_map, max_map, min_limited_map, need_reverse_map) {
 	var servoAngle;
 	//the mapped angle data to send through the serial port
 	var servoAngleMapped;
-
+	//history angle for filter
+	var lastAngle = 0;
+	//moving average filter gain
+	var filterGain = 0;
 	/**
 	helper function to clamp a number between two values
 	 */
@@ -61,11 +64,22 @@ function CameraServo(mid_map, max_map, min_limited_map, need_reverse_map) {
 		servoAngleMapped = clamp(servoAngleMapped, mapToDegree_min_limited, mapToDegree_180);
 	};
 	/**
+	Function to apply filter to the new calculated servo angle to damping the vibration
+	*/
+	var applyFilter(angle){
+		//moving average filter
+		angle = (lastAngle*filterGain + angle)/(filterGain+1);
+		lastAngle = angle;
+		return angle;
+	};
+	/**
 	function to set the servo actual turning angle from 0~180 degree
 	the return value is the mapped servo angle for serial port
 	 */
 	this.setAngle = function (angle) {
-
+		if(filterGain>0){
+			angle = applyFilter(angle);
+		}
 		if (mapNeed_reverse) {
 			servoAngle = -angle;
 		} else {
@@ -79,17 +93,18 @@ function CameraServo(mid_map, max_map, min_limited_map, need_reverse_map) {
 	i.e. setMap(0x20,0xA5); 0x20 is mapped to 0 degree, 0xA5 is mapped to 180 degree
 
 	 */
-	this.setMap = function (mid, max, min_limited, need_reverse) {
+	this.setMap = function (mid, max, min_limited, need_reverse, filter_gain) {
 		if (mid !== undefined && max !== undefined && min_limited !== undefined) {
 			mapToDegree_90 = clamp(mid, 0, 180);
 			mapToDegree_180 = clamp(max, 0, 180);
 			mapToDegree_min_limited = clamp(min_limited, 0, 180);
 			mapNeed_reverse = need_reverse;
+			filterGain = filter_gain;
 		}
 	};
 
 	//set the map from the constructor value
-	this.setMap(mid_map, max_map, min_limited_map, need_reverse_map);
+	this.setMap(mid_map, max_map, min_limited_map, need_reverse_map, filter_gain);
 };
 // export the class
 module.exports = CameraServo;

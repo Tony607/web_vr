@@ -242,9 +242,10 @@ function OrientationProcessor(servosMap) {
 			return;
 		}
 		// Instantiate there servos
-		yawServo = new CameraServo(servos[0][0], servos[0][1], servos[0][2], servos[0][3]);
-		pitchServo = new CameraServo(servos[1][0], servos[1][1], servos[1][2], servos[1][3]);
-		rollServo = new CameraServo(servos[2][0], servos[2][1], servos[2][2], servos[2][3]);
+		//we just use the filter on the yaw servo, because it seems like to have the largest vibration
+		yawServo = new CameraServo(servos[0][0], servos[0][1], servos[0][2], servos[0][3], 1.5);
+		pitchServo = new CameraServo(servos[1][0], servos[1][1], servos[1][2], servos[1][3], 0);
+		rollServo = new CameraServo(servos[2][0], servos[2][1], servos[2][2], servos[2][3], 0);
 
 		robotSpeedController = new RobotSpeedControl();
 	};
