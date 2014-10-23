@@ -66,7 +66,7 @@ function CameraServo(mid_map, max_map, min_limited_map, need_reverse_map, filter
 	/**
 	Function to apply filter to the new calculated servo angle to damping the vibration
 	*/
-	var applyFilter(angle){
+	var applyFilter= function (angle){
 		//moving average filter
 		angle = (lastAngle*filterGain + angle)/(filterGain+1);
 		lastAngle = angle;
