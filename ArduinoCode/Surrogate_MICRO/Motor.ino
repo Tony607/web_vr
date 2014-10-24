@@ -43,7 +43,7 @@ float speedPIControl(float DT, float input, float setPoint,  float Kp, float Ki)
 }
 
 
-ISR(TIMER1_COMPA_vect)
+ISR(TIMER3_COMPA_vect)
 {
 	counter_m[0]++;
 	counter_m[1]++;
@@ -59,9 +59,9 @@ ISR(TIMER1_COMPA_vect)
 		// We need to wait at lest 200ns to generate the Step pulse...
 		period_m_index[0] = (period_m_index[0]+1)&0x07; // period_m_index from 0 to 7
 		//delay_200ns();
-		SET(PORTD,4); // STEP Motor 1
+		SET(PORTF,4); // STEP Motor 1
 		delayMicroseconds(1);
-		CLR(PORTD,4);
+		CLR(PORTF,4);
 	}
 	if (counter_m[1] >= period_m[1][period_m_index[1]])
 	{
@@ -160,4 +160,40 @@ void setMotorSpeed(uint8_t motor, int16_t tspeed)
 		digitalWrite(M_EN,HIGH);   // Disable motors
 	else
 		digitalWrite(M_EN,LOW);   // Enable motors
+}
+/**
+Funciton for stop the motor when robot angle exceed MAX_UPRIGHT_ANGLE 
+or motors(control_output, this is the one without steering)
+has running freely at MAX_MOTOR_SPEED for too long(its not going any further)
+*/
+void stopAndResetMotors(){
+	setMotorSpeed(0,0);
+	setMotorSpeed(1,0);
+	PID_errorSum = 0;  // Reset PID I term
+}
+/**
+the getup pattern state machine
+*/
+bool getUpStateMachine(){
+
+	switch(getUpstate){
+	case 0://initial state
+		if((angle_adjusted>MAX_UPRIGHT_ANGLE)||(angle_adjusted<-MAX_UPRIGHT_ANGLE)){
+			getUpstate = 1;
+		}
+		return false;
+		break;
+	case 1://it's laying down
+		if((angle_adjusted<STRAIGHT_UP)&&(angle_adjusted>-STRAIGHT_UP)){//it gets straight up
+			getUpstate = 0;
+			return true;
+		}
+		return false;
+		break;
+	default:
+		getUpstate = 0;
+		return false;
+		break;
+	}
+
 }

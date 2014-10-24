@@ -20,6 +20,7 @@
 // The output of the control (motor speed) is integrated so it´s really an acceleration
 
 #include "Config.h"
+#include "RangeFinder.h"
 #include <PwmServo.h>
 #include <Wire.h>
 #include <I2Cdev.h>
@@ -92,6 +93,11 @@ Quaternion q;
 
 uint8_t loop_counter;       // To generate a medium loop 40Hz 
 uint8_t slow_loop_counter;  // slow loop 2Hz
+//count the continuous time motors are running at the max speed
+uint8_t stopCounter = 0;
+unsigned char getUpstate = 0;
+//Indicate the motor is stopped because if freewheel running
+bool stopMotorFreeWheel = false;
 long timer_old;
 long timer_value;
 float dt;
@@ -149,6 +155,7 @@ uint8_t period_m_index[2];    // index for subperiods
 void setup() 
 { 
 	// STEPPER PINS 
+	initializeRangeSensor();
 	pinMode(M_EN,OUTPUT);  // ENABLE MOTORS
 	pinMode(M1_STEP,OUTPUT);  // STEP MOTOR 1 PORTD,7
 	pinMode(M1_DIR,OUTPUT);  // DIR MOTOR 1
@@ -214,28 +221,29 @@ void setup()
 	SERIAL_PORT.println("Testing device connections...");
 	SERIAL_PORT.println(mpu.testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
 	timer_old = millis();
-
-	//We are going to overwrite the Timer1 to use the stepper motors
+	//setup the sonar range sensor to use Timer 1 capture
+	initializeRangeSensor();
+	//We are going to overwrite the Timer3 to use the stepper motors
 
 	// STEPPER MOTORS INITIALIZATION
-	// TIMER1 CTC MODE
-	TCCR1B &= ~(1<<WGM13);
-	TCCR1B |=  (1<<WGM12);
-	TCCR1A &= ~(1<<WGM11); 
-	TCCR1A &= ~(1<<WGM10);
+	// TIMER3 CTC MODE
+	TCCR3B &= ~(1<<WGM33);
+	TCCR3B |=  (1<<WGM32);
+	TCCR3A &= ~(1<<WGM31); 
+	TCCR3A &= ~(1<<WGM30);
 
 	// output mode = 00 (disconnected)
-	TCCR1A &= ~(3<<COM1A0); 
-	TCCR1A &= ~(3<<COM1B0); 
+	TCCR3A &= ~(3<<COM3A0); 
+	TCCR3A &= ~(3<<COM3B0); 
 
 	// Set the timer pre-scaler
 	// Generally we use a divider of 8, resulting in a 2MHz timer on 16MHz CPU
-	TCCR1B = (TCCR1B & ~(0x07<<CS10)) | (2<<CS10);
+	TCCR3B = (TCCR3B & ~(0x07<<CS30)) | (2<<CS30);
 
-	//OCR1A = 125;  // 16Khz
-	//OCR1A = 100;  // 20Khz
-	OCR1A = 80;   // 25Khz
-	TCNT1 = 0;
+	//OCR3A = 125;  // 16Khz
+	//OCR3A = 100;  // 20Khz
+	OCR3A = 80;   // 25Khz
+	TCNT3 = 0;
 
 	delay(2000);
 
@@ -245,7 +253,7 @@ void setup()
 
 	SERIAL_PORT.println("Initializing Stepper motors...");
 	delay(1000);
-	TIMSK1 |= (1<<OCIE1A);  // Enable Timer1 interrupt
+	TIMSK3 |= (1<<OCIE3A);  // Enable Timer1 interrupt
 	digitalWrite(M_EN,LOW);    // Enable stepper drivers
 
 	// Little motor vibration to indicate that robot is ready
@@ -272,11 +280,11 @@ void loop()
 	serialDataParser();
 	/*uint8_t parse = parseLenProto();
 	if(parse == CONTROLVAL){
-		throttle = constrain(getThrottle(),-MAX_THROTTLE,MAX_THROTTLE);
-		steering = constrain(getSteering(),-MAX_STEERING,MAX_STEERING);
+	throttle = constrain(getThrottle(),-MAX_THROTTLE,MAX_THROTTLE);
+	steering = constrain(getSteering(),-MAX_STEERING,MAX_STEERING);
 	} else if(parse == PIDVAL){
-		Kp_user = constrain(getP()*SAFEMAXKP/100.0,0,SAFEMAXKP);
-		Kd_user = constrain(getD()*SAFEMAXKD/100.0,0,SAFEMAXKD);
+	Kp_user = constrain(getP()*SAFEMAXKP/100.0,0,SAFEMAXKP);
+	Kd_user = constrain(getD()*SAFEMAXKD/100.0,0,SAFEMAXKD);
 	}*/
 	timer_value = millis();//overflow (go back to zero), after approximately 50 days
 	// New DMP Orientation solution?
@@ -343,10 +351,10 @@ void loop()
 		// We integrate the output (acceleration)
 		control_output += stabilityPDControl(dt,angle_adjusted,target_angle,Kp,Kd);	
 		/*if(parse == PIDVAL){
-			String output = String("new P=")+String(Kp_user)+String("\tnew D=")+String(Kd_user)+String("#");
-			SERIAL_PORT.println(output);
+		String output = String("new P=")+String(Kp_user)+String("\tnew D=")+String(Kd_user)+String("#");
+		SERIAL_PORT.println(output);
 		}*/
-		control_output = constrain(control_output,-500,500);   // Limit max output from control
+		control_output = constrain(control_output,-MAX_MOTOR_SPEED,MAX_MOTOR_SPEED);   // Limit max output from control
 
 
 		// The steering part of the control is injected directly on the output
@@ -354,18 +362,18 @@ void loop()
 		motor2 = -control_output + steering;   // Motor 2 is inverted
 
 		// Limit max speed
-		motor1 = constrain(motor1,-500,500);   
-		motor2 = constrain(motor2,-500,500);
+		motor1 = constrain(motor1,-MAX_MOTOR_SPEED,MAX_MOTOR_SPEED);   
+		motor2 = constrain(motor2,-MAX_MOTOR_SPEED,MAX_MOTOR_SPEED);
 
 		// Is robot ready (upright?)
-		if ((angle_adjusted<74)&&(angle_adjusted>-74))
+		if ((angle_adjusted<MAX_UPRIGHT_ANGLE)&&(angle_adjusted>-MAX_UPRIGHT_ANGLE)&&(!stopMotorFreeWheel))
 		{
 			// NORMAL MODE
 			setMotorSpeed(0,motor1);
 			setMotorSpeed(1,motor2);
 			pushUp_counter=0;
 
-			if ((angle_adjusted<40)&&(angle_adjusted>-40))
+			if ((angle_adjusted<RISING_UP)&&(angle_adjusted>-RISING_UP))
 			{
 				Kp = Kp_user;  // Default or user control gains
 				Kd = Kd_user; 
@@ -380,15 +388,13 @@ void loop()
 				Ki_thr = KI_THROTTLE_RAISEUP;
 			}   
 		}
-		else   // Robot not ready, angle > 70º
+		else   // Robot not ready, angle > MAX_UPRIGHT_ANGLE
 		{
-			setMotorSpeed(0,0);
-			setMotorSpeed(1,0);
-			PID_errorSum = 0;  // Reset PID I term
-			Kp = KP_RAISEUP;   // CONTROL GAINS FOR RAISE UP
-			Kd = KD_RAISEUP;
-			Kp_thr = KP_THROTTLE_RAISEUP;
-			Ki_thr = KI_THROTTLE_RAISEUP;
+			stopAndResetMotors();
+			//Kp = KP_RAISEUP;   // CONTROL GAINS FOR RAISE UP
+			//Kd = KD_RAISEUP;
+			//Kp_thr = KP_THROTTLE_RAISEUP;
+			//Ki_thr = KI_THROTTLE_RAISEUP;
 
 		} // New IMU data
 
@@ -397,11 +403,29 @@ void loop()
 		{
 			loop_counter = 0;
 			printRobotQuaternion();
+			toggleTrigPin();
 		} // Medium loop
 
-		if (slow_loop_counter>=99)  // 2Hz <= 200Hz/99
+		if (slow_loop_counter>=20)  // 10Hz <= 200Hz/20
 		{
-			slow_loop_counter = 0;
+			if(control_output>=MAX_MOTOR_SPEED || control_output<=-MAX_MOTOR_SPEED){
+				stopCounter++;//increase the counter if the motor is running at max speed
+			} else if(stopCounter<Max_FreeWheel_Count){
+				stopCounter=0;//reset the counter if the motor come back to mormal running speed
+			} else 
+				if(getUpStateMachine()){//Motor is stopped, detect the trigger to restart
+					stopCounter = 0;
+				}
+
+				//stop the motor for the freewheel run
+				if(stopCounter>= Max_FreeWheel_Count){
+					stopCounter = Max_FreeWheel_Count;
+					stopMotorFreeWheel = true;
+				}else{
+					stopMotorFreeWheel = false;
+				}
+
+				slow_loop_counter = 0;
 		}  // Slow loop
 	}
 	digitalWrite(DEBUG,LOW);//debug pin

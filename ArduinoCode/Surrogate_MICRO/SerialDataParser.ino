@@ -75,6 +75,13 @@ void stateMachine(unsigned char newbyte){
 	}
 }
 void updateThrottleAndSteering(){
+	float dampping_radio = obstacleAvoidance();
+	//SERIAL_PORT.println(dampping_radio);
+	//TODO:try the line below for obstacle avoidance
 	throttle = map(throttle_temp, 0,254, -MAX_THROTTLE,MAX_THROTTLE);
+	if(throttle>MAX_THROTTLE*dampping_radio){
+		throttle= MAX_THROTTLE*dampping_radio;
+	}
+	//throttle = map(throttle_temp, 0,254, -MAX_THROTTLE,MAX_THROTTLE);
 	steering = map(steering_temp, 0,254, -MAX_STEERING,MAX_STEERING);
 }
