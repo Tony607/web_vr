@@ -1,0 +1,53 @@
+<html>
+	<head>
+		<title>Remote</title>
+		<link rel="shortcut icon" href="/res/icon.ico">
+		<link type="text/css" href="/css/jquery-ui.css" rel="Stylesheet" />
+		<link type="text/css" href="/css/myview.css" rel="Stylesheet" />
+		
+		<script type="text/javascript" src="/js/socket.io.js"></script>
+		<script type="text/javascript" src="/js/jquery-1.11.1.js"></script>
+		<script type="text/javascript" src="/js/jquery-ui-1.10.4.min.js"></script>
+		<script type="text/javascript" src="/js/jquery.ui.touch-punch.min.js"></script>
+		<script type="text/javascript" src="/js/jquery.flot.js"></script>
+		<script src="/js/three.min.js"></script>
+		<script type="text/javascript" src="/js/displaydata.js"></script>
+		
+		
+		<script>
+		$(document).ready(function(){
+			displaydata.init();
+			
+			$( "#accordion" ).accordion({
+			  collapsible: true,
+			});
+			$('#dragY').on("contollerValueEvent", function (event, para) {
+				console.log(para);
+				socket.emit('move', para);
+			})
+			var socket = io.connect();
+			socket.on('connect', function () {
+				socket.on('message', function (msg) {
+					// Convert value to integer
+					if(msg){				
+						var eu = new THREE.Euler();
+						eu.setFromQuaternion(new THREE.Quaternion(msg._x,msg._y,msg.z,msg._w));
+						var new_inputs = [eu.x * (180/Math.PI), eu.x * (180/Math.PI)-10, eu.x * (180/Math.PI)-40];
+						displaydata.updatedisplay(new_inputs);
+					}
+				});
+			});
+		});
+		</script>
+	</head>
+	<body>
+		<div id="accordion">
+			<h3>Debug Data</h3>
+			<div id = "displaydata" role="main">
+				Throttle:<br/>
+				<div id="placeholder" style="width:1000px;height:200px;"></div><br/>
+				<div id="container" style="height: 492px, width: 876px"></div>
+			</div>
+		</div>						
+	</body>
+</html>

@@ -1,3 +1,5 @@
+
+
 var CameraServo = require("./CameraServo.js");
 var RobotSpeedControl = require("./RobotSpeedControl.js");
 var THREE = require("three");
@@ -16,11 +18,14 @@ function OrientationProcessor(servosMap) {
 	var q_BodyWorld = new THREE.Quaternion();
 	//Robot IMU Measured Quaternion
 	var q_RobotWorld = new THREE.Quaternion();
-	//Euler anlge object of User body world, set by q_BodyWorld quaternion
+	//Euler angle object of User body world, set by q_BodyWorld quaternion
 	var euler_BodyWorld = new THREE.Euler( 0, 0, 0, 'XYZ' );
+	//Euler angle object of Robot, set by q_RobotWorld
+	var euler_RobotWorld = new THREE.Euler( 0, 0, 0, 'XYZ' );
 	
 	var radtoDeg = 180 / Math.PI;
-
+	
+	var debug_mode = false;
 	/**
 	function to get the actual turning angles array(length of 3) for those three servos from the
 	Camera's local Quaternion		(q_CameraLocal)
@@ -160,6 +165,16 @@ function OrientationProcessor(servosMap) {
 		//console.log("throttle_steering_array", throttle_steering_array);
 		return throttle_steering_array;
 	};
+
+	/**get the servo array for the serial port, length = 3*/
+	var getServoArray = function () {
+		q_CameraLocal = calculateCameraLocalQuaternion(q_CameraWorld, q_RobotWorld);
+		var ypr_angles = getYawPitchRollFromQuaternion(q_CameraLocal);
+
+		//print the angles
+		//console.log("camera Local ypr:", ypr_angles[0].toFixed(2), ypr_angles[1].toFixed(2), ypr_angles[2].toFixed(2));
+		return [yawServo.setAngle(ypr_angles[0]), pitchServo.setAngle(ypr_angles[1]), rollServo.setAngle(ypr_angles[2])];
+	};
 	/**
 	function to set the q_CameraWorld, it take an object with w,x,y,z properties
 	this is the aligned and adjusted Quaternion of the head mount display,
@@ -188,6 +203,12 @@ function OrientationProcessor(servosMap) {
 		}
 		q_BodyWorld.set(q.x, q.y, q.z, q.w);
 	};
+	/**Function to set the debug mode on or off*/
+	this.setDebugMode = function (flag){
+		if(flag!==undefined){
+			debug_mode = flag;
+		}
+	};
 	/**
 	function to set the q_RobotWorld, it take an object with w,x,y,z properties
 	Robot IMU Measured Quaternion
@@ -202,28 +223,22 @@ function OrientationProcessor(servosMap) {
 		//calculate the yaw error and body pitch angles in degree
 		//This is called for every new robot world quaternion change, approximately 50Hz(every 20ms)
 		var throttle_steering_array = calucateRobotSpeed();
-		var servo_array = this.getServoArray();
+		var servo_array = getServoArray();
 		var serial_array = servo_array.concat(throttle_steering_array);
 		serial_array[5] = 0xFF;
 		var serial_buf = new Buffer(serial_array);
 		//console.log("serial_buf:", serial_buf);
 		return serial_buf;
-	};
-
-	/**get the servo array for the serial port, length = 3*/
-	this.getServoArray = function () {
-		q_CameraLocal = calculateCameraLocalQuaternion(q_CameraWorld, q_RobotWorld);
-		var ypr_angles = getYawPitchRollFromQuaternion(q_CameraLocal);
-
-		//print the angles
-		//console.log("camera Local ypr:", ypr_angles[0].toFixed(2), ypr_angles[1].toFixed(2), ypr_angles[2].toFixed(2));
-		return [yawServo.setAngle(ypr_angles[0]), pitchServo.setAngle(ypr_angles[1]), rollServo.setAngle(ypr_angles[2])];
-	};
+	};	
 	/**
-	Function generates the buffer for Arduino
-	It combine the servo data and robot throttle, steering data and append the start sign at the beginning
-	 */
-	this.generateSerialPackageBuffer = function () {};
+	Calculate the robot pitch for its quaternion,
+	return the pitch angle in degree
+	*/
+	this.calculateRobotPitchAngle = function(){
+		euler_RobotWorld.setFromQuaternion(q_RobotWorld);
+		var robot_pitch = euler_RobotWorld.y*radtoDeg;
+		return robot_pitch;
+	};
 	/**
 	function to instantiate and set the serial angle map for Yaw, pitch, roll servos
 	parameter "servos" is a 3 x 2 array
@@ -249,6 +264,7 @@ function OrientationProcessor(servosMap) {
 
 		robotSpeedController = new RobotSpeedControl();
 	};
+
 	//set the map from the constructor value
 	initProcessor(servosMap);
 };
