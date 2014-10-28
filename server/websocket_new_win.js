@@ -1,7 +1,7 @@
 /**
 This is the test code which accept both quaternion and distance data from the Arduino
 and send the data to the client through WebSocket.
-*/
+ */
 //configure data for three servos,(Yaw, Pitch, Roll)
 //middle(0 degree), max(90 degree), min(angle limited by gimbal physical layout> -90 degree), need reverse
 var servosMap = [
@@ -10,20 +10,18 @@ var servosMap = [
 	[0x5c, 0x9e, 0x1e, false]
 ];
 var debug_mode = true;
-if(debug_mode){
+if (debug_mode) {
 	var DebugServer = require("./DebugServer.js");
 	var debugServer = new DebugServer(8888);
 }
-var serialportName = "/dev/rfcomm1";
-var serialPacketLength = 6;//x,y,z,w,distance,0xFF
-var buffLength = serialPacketLength*2-1;//1 byte less than two pack size
+
+var serialPacketLength = 6; //x,y,z,w,distance,0xFF
+var buffLength = serialPacketLength * 2 - 1; //1 byte less than two pack size
 var serialPacketBufferArray = [0, 0, 0, 0, 0]; //length of 6
 var quaternion_raw_data = [0, 0, 0, 0]; //this is the parsed data array
 var OrientationProcessor = require("./OrientationProcessor.js");
 var THREE = require("three");
 var controls = new OrientationProcessor(servosMap);
-var serialport = require("serialport");
-var SerialPort = serialport.SerialPort; // localize object constructor
 /**
 Two aligned quaternion coming from the user,
 first  quaternion:
@@ -94,24 +92,11 @@ var getQuaternionsFromBuffer = function (bytesBuffer) {
 	return quaternions;
 };
 
-console.log("---Try to connect to serial port " + serialportName + "---");
-arduinoPort = new SerialPort(serialportName, {
-		baudrate : 115200,
-		parser : serialport.parsers.raw //parser : serialport.parsers.readline(" # ")
-	});
-arduinoPort.on(" open ", function () {
-	console.log('arduinoPort->open');
-});
-arduinoPort.on('data', function (data) {
-	//console.log(" arduinoPort->data ",data);
-	readQuaternionFromBuffer(data);
-});
-arduinoPort.on('close', function () {
-	console.log('arduinoPort->close');
-});
-arduinoPort.on('error', function () {
-	console.log('arduinoPort->error');
-});
+console.log("---NO serial support, run on window---");
+setInterval(function () {
+	var dummyBuff = new Buffer(6);
+	readQuaternionFromBuffer(dummyBuff);
+}, 20);
 /**
 Function that read the incoming serial buffer and parse the quaternion data
  */
@@ -124,15 +109,15 @@ var readQuaternionFromBuffer = function (buf) {
 			if (buf[i] === 0xFF) { //found the latest stop sign in index i of the big buffer
 				//slice out the last package with length of 4(trimmed out the stop sign)
 				//because we just need the 4 bytes to construct the quaternion and one for the distance(total 5 bytes)
-				buf = buf.slice(i - serialPacketLength -1, i); 
+				buf = buf.slice(i - serialPacketLength - 1, i);
 				//shift the most latest incomplete pack to the serialPacketBufferArray
 				//if any bytes exist after the stop sign
-				for (var k = i+1; k<buf.length-1; k++){					
+				for (var k = i + 1; k < buf.length - 1; k++) {
 					serialPacketBufferArray.shift();
-					serialPacketBufferArray[serialPacketLength-2] = buf[k];
+					serialPacketBufferArray[serialPacketLength - 2] = buf[k];
 				}
 				handleSerialComm(buf);
-				return;//done with the big buffer
+				return; //done with the big buffer
 			}
 		}
 	}
@@ -144,7 +129,7 @@ var readQuaternionFromBuffer = function (buf) {
 		} else {
 			//FIFO
 			serialPacketBufferArray.shift();
-			serialPacketBufferArray[serialPacketLength-2] = buf[i];
+			serialPacketBufferArray[serialPacketLength - 2] = buf[i];
 		}
 	}
 };
@@ -166,10 +151,14 @@ var handleSerialComm = function (bytes_array) {
 	var robot_distance = bytes_array[3];
 	//test the OrientationProcessor
 	var serial_buf = controls.setRobotWorldQuaternion(q);
-	if(debug_mode){
+	if (debug_mode) {
 		var robot_pitch = controls.calculateRobotPitchAngle();
 		var cmd_throttle = serial_buf[3];
-		var sendPack = {throttle:cmd_throttle, angle: robot_pitch, distance: robot_distance};
+		var sendPack = {
+			throttle : cmd_throttle,
+			angle : robot_pitch,
+			distance : robot_distance
+		};
 		debugServer.sendMessage(sendPack);
 	}
 	if (arduinoPort && !arduinoPort.paused) {
@@ -178,3 +167,13 @@ var handleSerialComm = function (bytes_array) {
 	}
 	console.log(" Quaternion : ", q);
 };
+
+var runDummyLoop = function () {
+	console.log("running dummy loop...");
+	setInterval(function () {
+		var dummyBuff = new Buffer(6);
+		readQuaternionFromBuffer(dummyBuff);
+	}, 20);
+
+}
+setTimeout(runDummyLoop, 3);
