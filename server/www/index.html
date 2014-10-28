@@ -32,7 +32,7 @@
 					if(msg){				
 						var eu = new THREE.Euler();
 						eu.setFromQuaternion(new THREE.Quaternion(msg._x,msg._y,msg.z,msg._w));
-						var new_inputs = [eu.x * (180/Math.PI), eu.x * (180/Math.PI)-10, eu.x * (180/Math.PI)-40];
+						var new_inputs = [msg.throttle, msg.angle, msg.distance];
 						displaydata.updatedisplay(new_inputs);
 					}
 				});
