@@ -148,7 +148,7 @@ var handleSerialComm = function (bytes_array) {
 	q.y = (bytes_array[1] & 0xFF) / 127 - 1;
 	q.z = (bytes_array[2] & 0xFF) / 127 - 1;
 	q.w = (bytes_array[3] & 0xFF) / 127 - 1;
-	var robot_distance = bytes_array[3];
+	var robot_distance = bytes_array[4];
 	//test the OrientationProcessor
 	var serial_buf = controls.setRobotWorldQuaternion(q);
 	if (debug_mode) {
