@@ -236,7 +236,7 @@ function OrientationProcessor(servosMap) {
 	*/
 	this.calculateRobotPitchAngle = function(){
 		euler_RobotWorld.setFromQuaternion(q_RobotWorld);
-		var robot_pitch = euler_RobotWorld.y*radtoDeg;
+		var robot_pitch = euler_RobotWorld.x*radtoDeg;
 		return robot_pitch;
 	};
 	/**
