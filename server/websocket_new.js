@@ -168,7 +168,7 @@ var handleSerialComm = function (bytes_array) {
 	var serial_buf = controls.setRobotWorldQuaternion(q);
 	if(debug_mode){
 		var robot_pitch = controls.calculateRobotPitchAngle();
-		var cmd_throttle = serial_buf[3];
+		var cmd_throttle = serial_buf[3]-127;
 		var sendPack = {throttle:cmd_throttle, angle: robot_pitch, distance: robot_distance};
 		debugServer.sendMessage(sendPack);
 	}
