@@ -5,7 +5,7 @@ and send the data to the client through WebSocket.
 //configure data for three servos,(Yaw, Pitch, Roll)
 //middle(0 degree), max(90 degree), min(angle limited by gimbal physical layout> -90 degree), need reverse
 var servosMap = [
-	[0x59, 0x9d, 0x20, true],
+	[0x5e, 0x99, 0x26, true],
 	[0x62, 0xa3, 0x52, true],
 	[0x5c, 0x9e, 0x1e, false]
 ];
