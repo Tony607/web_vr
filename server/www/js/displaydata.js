@@ -33,9 +33,9 @@ var displaydata = (function () {
 	var generateSaveString = function () {
 		var fileString = "";
 		for (var i = 0; i < totalPoints; ++i) {
-			fileString = fileString + i + "\t";
+			fileString = fileString + i;
 			for (var j = 0; j < typesOfData; j++) {
-				fileString = fileString + resArray[j][i][1] + "\t";
+				fileString = fileString +"\t"+ resArray[j][i][1];
 			}
 			fileString = fileString + "\r\n"
 		}
@@ -47,7 +47,7 @@ var displaydata = (function () {
 		var blob = new Blob([fileString], {
 				type : "text/plain;charset=utf-8"
 			});
-		saveAs(blob, "hello world.txt");
+		saveAs(blob, "test.tsv");
 	};
 	// Initialize function
 	init = function () {
