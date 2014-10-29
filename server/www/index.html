@@ -12,6 +12,7 @@
 		<script type="text/javascript" src="/js/jquery.flot.js"></script>
 		<script src="/js/three.min.js"></script>
 		<script type="text/javascript" src="/js/displaydata.js"></script>
+		<script type="text/javascript" src="/js/FileSaver.min.js"></script>
 		
 		
 		<script>
@@ -32,7 +33,7 @@
 					if(msg){				
 						var eu = new THREE.Euler();
 						eu.setFromQuaternion(new THREE.Quaternion(msg._x,msg._y,msg.z,msg._w));
-						var new_inputs = [msg.throttle, msg.angle, msg.distance];
+						var new_inputs = [msg.throttle, msg.angle, msg.distance, msg.controloutput];
 						displaydata.updatedisplay(new_inputs);
 					}
 				});
@@ -47,6 +48,9 @@
 				Throttle:Yellow; Angle:Blue; Distance:Red<br/>
 				<div id="placeholder" style="width:1000px;height:500px;"></div><br/>
 				<div id="container" style="height: 492px, width: 876px"></div>
+				<p>
+					<button id="savebutton">Save Data</button>
+				</p>
 			</div>
 		</div>						
 	</body>
