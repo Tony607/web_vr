@@ -1,12 +1,23 @@
+/**
+This is the test code which accept both quaternion and distance data from the Arduino
+and send the data to the client through WebSocket.
+*/
 //configure data for three servos,(Yaw, Pitch, Roll)
 //middle(0 degree), max(90 degree), min(angle limited by gimbal physical layout> -90 degree), need reverse
 var servosMap = [
 	[0x5e, 0x99, 0x26, true],
-	[0x62, 0xa3, 0x52, true],
+	[0x62, 0xa3, 0x5b, true],
 	[0x5c, 0x9e, 0x1e, false]
 ];
+var debug_mode = true;
+if(debug_mode){
+	var DebugServer = require("./DebugServer.js");
+	var debugServer = new DebugServer(8888);
+}
 var serialportName = "/dev/rfcomm1";
-var serialPacketBufferArray = [0, 0, 0, 0]; //length of 4
+var serialPacketLength = 6;//x,y,z,w,distance,0xFF
+var buffLength = serialPacketLength*2-1;//1 byte less than two pack size
+var serialPacketBufferArray = [0, 0, 0, 0, 0]; //length of 6
 var quaternion_raw_data = [0, 0, 0, 0]; //this is the parsed data array
 var OrientationProcessor = require("./OrientationProcessor.js");
 var THREE = require("three");
@@ -107,22 +118,22 @@ Function that read the incoming serial buffer and parse the quaternion data
 var readQuaternionFromBuffer = function (buf) {
 	var i = 0;
 	//if the buffer is too long just use the last(latest) pack
-	if (buf.length >= 9) { //9 = 5*2-1(1 byte less than two pack size)
+	if (buf.length >= buffLength) {
 		//read the buffer from the last byte, and find the first occurrence of 0xFF
 		for (i = buf.length - 1; i >= 0; i--) {
 			if (buf[i] === 0xFF) { //found the latest stop sign in index i of the big buffer
 				//slice out the last package with length of 4(trimmed out the stop sign)
-				//because we just need the 4 bytes to construct the quaternion
-				buf = buf.slice(i - 4, i); 
+				//because we just need the 4 bytes to construct the quaternion and one for the distance(total 5 bytes)
+				buf = buf.slice(i - serialPacketLength -1, i); 
 				//shift the most latest incomplete pack to the serialPacketBufferArray
 				//if any bytes exist after the stop sign
 				for (var k = i+1; k<buf.length-1; k++){					
 					serialPacketBufferArray.shift();
-					serialPacketBufferArray[3] = buf[k];
+					serialPacketBufferArray[serialPacketLength-2] = buf[k];
 				}
 				handleSerialComm(buf);
 				return;//done with the big buffer
-			} 
+			}
 		}
 	}
 	for (i = 0; i < buf.length; i++) {
@@ -133,7 +144,7 @@ var readQuaternionFromBuffer = function (buf) {
 		} else {
 			//FIFO
 			serialPacketBufferArray.shift();
-			serialPacketBufferArray[3] = buf[i];
+			serialPacketBufferArray[serialPacketLength-2] = buf[i];
 		}
 	}
 };
@@ -152,8 +163,15 @@ var handleSerialComm = function (bytes_array) {
 	q.y = (bytes_array[1] & 0xFF) / 127 - 1;
 	q.z = (bytes_array[2] & 0xFF) / 127 - 1;
 	q.w = (bytes_array[3] & 0xFF) / 127 - 1;
+	var robot_distance = bytes_array[4];
 	//test the OrientationProcessor
 	var serial_buf = controls.setRobotWorldQuaternion(q);
+	if(debug_mode){
+		var robot_pitch = controls.calculateRobotPitchAngle();
+		var cmd_throttle = serial_buf[3]-127;
+		var sendPack = {throttle:cmd_throttle, angle: robot_pitch, distance: robot_distance};
+		debugServer.sendMessage(sendPack);
+	}
 	if (arduinoPort && !arduinoPort.paused) {
 		//console.log(" serial_buf ",serial_buf);
 		arduinoPort.write(serial_buf);
