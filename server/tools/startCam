@@ -1,0 +1,6 @@
+cd ~/github/mjpg-streamer-master/mjpg-streamer-experimental
+./mjpg_streamer -i "./input_uvc.so -y -d /dev/video0 -r 320x240 -n -f 25" -o "./output_http.so -p 8088 -w ./www" &
+./mjpg_streamer -i "./input_uvc.so -y -d /dev/video1 -r 320x240 -n -f 25" -o "./output_http.so -p 8099 -w ./www" &
+#cd ~/github/web_vr/server
+#node websocket.js &
+
