@@ -235,8 +235,9 @@ function OrientationProcessor(servosMap) {
 	return the pitch angle in degree
 	*/
 	this.calculateRobotPitchAngle = function(){
-		euler_RobotWorld.setFromQuaternion(q_RobotWorld);
-		var robot_pitch = euler_RobotWorld.x*radtoDeg;
+		//euler_RobotWorld.setFromQuaternion(q_RobotWorld);
+		//var robot_pitch = euler_RobotWorld.x*radtoDeg;
+		var robot_pitch = getPitchFromQuaternion(q_RobotWorld);
 		return robot_pitch;
 	};
 	/**
