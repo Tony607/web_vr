@@ -6,8 +6,8 @@ and send the data to the client through WebSocket.
 //middle(0 degree), max(90 degree), min(angle limited by gimbal physical layout> -90 degree), need reverse
 var servosMap = [
 	[0x5e, 0x99, 0x26, true],
-	[0x62, 0xa3, 0x5b, true],
-	[0x5c, 0x9e, 0x1e, false]
+	[0x3c, 0x6f, 0x34, true],
+	[0x71, 0xaf, 0x33, false]
 ];
 var debug_mode = true;
 if(debug_mode){
@@ -15,7 +15,7 @@ if(debug_mode){
 	var debugServer = new DebugServer(8888);
 }
 var serialportName = "/dev/rfcomm1";
-var serialPacketLength = 6;//x,y,z,w,distance,0xFF
+var serialPacketLength = 7;//x,y,z,w,distance,0xFF
 var buffLength = serialPacketLength*2-1;//1 byte less than two pack size
 var serialPacketBufferArray = [0, 0, 0, 0, 0]; //length of 6
 var quaternion_raw_data = [0, 0, 0, 0]; //this is the parsed data array
@@ -164,12 +164,13 @@ var handleSerialComm = function (bytes_array) {
 	q.z = (bytes_array[2] & 0xFF) / 127 - 1;
 	q.w = (bytes_array[3] & 0xFF) / 127 - 1;
 	var robot_distance = bytes_array[4];
+	var robot_control_output = bytes_array[5] - 127;//the range remapped, 127 is control_output 0
 	//test the OrientationProcessor
 	var serial_buf = controls.setRobotWorldQuaternion(q);
 	if(debug_mode){
 		var robot_pitch = controls.calculateRobotPitchAngle();
 		var cmd_throttle = serial_buf[3]-127;
-		var sendPack = {throttle:cmd_throttle, angle: robot_pitch, distance: robot_distance};
+		var sendPack = {throttle:cmd_throttle, angle: robot_pitch, distance: robot_distance, controloutput: robot_control_output};
 		debugServer.sendMessage(sendPack);
 	}
 	if (arduinoPort && !arduinoPort.paused) {
