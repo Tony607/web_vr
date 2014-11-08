@@ -24,7 +24,7 @@ var displaydata = (function () {
 		}, // drawing is faster without shadows
 		yaxis : {
 			min : -180,
-			max : 180
+			max : 255
 		},
 		xaxis : {
 			show : false
