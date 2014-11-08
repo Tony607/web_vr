@@ -78,7 +78,8 @@ var displaydata = (function () {
 		plot.setData(resArray);
 		plot.draw();
 		var deltaTime =  Date.now() - lastTimeStamp;
-		console.log("deltaTime:", deltaTime)
+		lastTimeStamp = Date.now();
+		console.log("deltaTime:", deltaTime);
 
 	}
 	return {
