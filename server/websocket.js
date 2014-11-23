@@ -9,6 +9,8 @@ var servosMap = [
 	[0x3c, 0x6f, 0x34, true],
 	[0x71, 0xaf, 0x33, false]
 ];
+//forward max, pointing up, backward max
+var pushupServoMap = [0x21, 0x4B, 0x84];
 var debug_mode = true;
 if(debug_mode){
 	var DebugServer = require("./DebugServer.js");

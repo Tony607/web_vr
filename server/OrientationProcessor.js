@@ -175,6 +175,12 @@ function OrientationProcessor(servosMap) {
 		//console.log("camera Local ypr:", ypr_angles[0].toFixed(2), ypr_angles[1].toFixed(2), ypr_angles[2].toFixed(2));
 		return [yawServo.setAngle(ypr_angles[0]), pitchServo.setAngle(ypr_angles[1]), rollServo.setAngle(ypr_angles[2])];
 	};
+	/**get the pushup servo command for the serial port*/
+	var getPushupServo = function () {
+		var pushupServoCmd = 0x58;
+		var movetest = (new Date().getTime() / 100).toFixed(0)%100+0x21;
+		return pushupServoCmd;
+	};
 	/**
 	function to set the q_CameraWorld, it take an object with w,x,y,z properties
 	this is the aligned and adjusted Quaternion of the head mount display,
@@ -225,7 +231,8 @@ function OrientationProcessor(servosMap) {
 		var throttle_steering_array = calucateRobotSpeed();
 		var servo_array = getServoArray();
 		var serial_array = servo_array.concat(throttle_steering_array);
-		serial_array[5] = 0xFF;
+		serial_array[5] = getPushupServo();
+		serial_array[6] = 0xFF;
 		var serial_buf = new Buffer(serial_array);
 		//console.log("serial_buf:", serial_buf);
 		return serial_buf;
