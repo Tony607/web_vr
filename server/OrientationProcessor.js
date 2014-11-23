@@ -177,8 +177,8 @@ function OrientationProcessor(servosMap) {
 	};
 	/**get the pushup servo command for the serial port*/
 	var getPushupServo = function () {
-		var pushupServoCmd = 0x58;
-		//var movetest = (new Date().getTime() / 100).toFixed(0)%100+0x21;
+		//var pushupServoCmd = 0x58;
+		var pushupServoCmd = (require('os').uptime()*10).toFixed(0)%100+0x21;
 		return pushupServoCmd;
 	};
 	/**
