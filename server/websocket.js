@@ -150,6 +150,15 @@ var readQuaternionFromBuffer = function (buf) {
 		}
 	}
 };
+/**checksum algorithm for the incoming serial data*/
+var checksum = function(checkdata){
+	var squaresum = Math.pow(checkdata.x,2)+Math.pow(checkdata.y,2)+Math.pow(checkdata.z,2)+Math.pow(checkdata.w,2);
+	if(Math.abs(squaresum-1)>1.04) {
+		return false;
+	} else {
+		return true;
+	}
+};
 /**function that take a x,y,z,w bytes array coming from Arduino serial port and construct the quaternion object,
 call the OrientationProcessor to calculate and generate the output serial buffer,
 finally send this buffer to serial port
@@ -165,6 +174,10 @@ var handleSerialComm = function (bytes_array) {
 	q.y = (bytes_array[1] & 0xFF) / 127 - 1;
 	q.z = (bytes_array[2] & 0xFF) / 127 - 1;
 	q.w = (bytes_array[3] & 0xFF) / 127 - 1;
+	if(!checksum(q)){
+		console.log("=====Serial Checksum failed=======");
+		return;
+	}
 	var robot_distance = bytes_array[4];
 	var robot_control_output = bytes_array[5] - 127;//the range remapped, 127 is control_output 0
 	//test the OrientationProcessor
