@@ -230,9 +230,12 @@ function OrientationProcessor(servosMap) {
 		//This is called for every new robot world quaternion change, approximately 50Hz(every 20ms)
 		var throttle_steering_array = calucateRobotSpeed();
 		var servo_array = getServoArray();
-		var serial_array = servo_array.concat(throttle_steering_array);
-		serial_array[5] = getPushupServo();
-		serial_array[6] = 0xFF;
+		var serial_array= [0xFF];//start byte 0
+		serial_array = serial_array.concat(servo_array);//1,2,3
+		serial_array = serial_array.concat(throttle_steering_array);//4,5
+		//var serial_array = servo_array.concat(throttle_steering_array);
+		serial_array[6] = getPushupServo();
+		//serial_array[6] = 0xFF;
 		var serial_buf = new Buffer(serial_array);
 		//console.log("serial_buf:", serial_buf);
 		return serial_buf;
