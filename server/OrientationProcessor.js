@@ -146,10 +146,10 @@ function OrientationProcessor(servosMap) {
 		//calculate the pitch angle of the user body from quaternion
 		//var body_pitch = getPitchFromQuaternion(q_BodyWorld);
 		//print the pitch angle
-		console.log("user body_pitch:", body_pitch.toFixed(2));
+		//console.log("user body_pitch:", body_pitch.toFixed(2));
 		//calculate the yaw angle of the user body from quaternion
 		//var body_yaw = getYawFromQuaternion(q_BodyWorld);
-		console.log("body_yaw:", body_yaw.toFixed(2));
+		//console.log("body_yaw:", body_yaw.toFixed(2));
 		//calculate the yaw angle of the robot from quaternion
 		var robot_yaw = getYawFromQuaternion(q_RobotWorld);
 		//calculate the yaw angle error from the two previous yaw angles

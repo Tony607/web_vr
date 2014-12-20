@@ -192,5 +192,5 @@ var handleSerialComm = function (bytes_array) {
 		//console.log(" serial_buf ",serial_buf);
 		arduinoPort.write(serial_buf);
 	}
-	console.log(" Quaternion : ", q);
+	//console.log(" Quaternion : ", q);
 };
