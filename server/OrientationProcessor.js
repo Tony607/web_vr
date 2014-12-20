@@ -181,6 +181,15 @@ function OrientationProcessor(servosMap) {
 		//var pushupServoCmd = (require('os').uptime()*10).toFixed(0)%100+0x21;
 		return pushupServoCmd;
 	};
+	/**Calculate CheckSum for the serial port*/
+	var calculateCheckSum = function (serialArray) {
+		var checksum = 0x00;
+		for(var i = 0; i < serialArray.length; i++) {
+			checksum = checksum + serialArray[i];
+		}
+		var checksum = checksum & 0xFE;
+		return checksum;
+	};
 	/**
 	function to set the q_CameraWorld, it take an object with w,x,y,z properties
 	this is the aligned and adjusted Quaternion of the head mount display,
@@ -235,6 +244,7 @@ function OrientationProcessor(servosMap) {
 		serial_array = serial_array.concat(throttle_steering_array);//4,5
 		//var serial_array = servo_array.concat(throttle_steering_array);
 		serial_array[6] = getPushupServo();
+		serial_array[7] = calculateCheckSum(serial_array);
 		//serial_array[6] = 0xFF;
 		var serial_buf = new Buffer(serial_array);
 		//console.log("serial_buf:", serial_buf);
