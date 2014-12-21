@@ -153,7 +153,9 @@ var readQuaternionFromBuffer = function (buf) {
 /**checksum algorithm for the incoming serial data*/
 var checksum = function(checkdata){
 	var squaresum = Math.pow(checkdata.x,2)+Math.pow(checkdata.y,2)+Math.pow(checkdata.z,2)+Math.pow(checkdata.w,2);
-	if(Math.abs(squaresum-1)>1.04) {
+	var checksumerr = Math.abs(squaresum-1);
+	console.log("err:",checksumerr);
+	if(checksumerr>1.04) {
 		return false;
 	} else {
 		return true;
