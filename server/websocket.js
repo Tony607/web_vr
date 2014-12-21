@@ -154,8 +154,7 @@ var readQuaternionFromBuffer = function (buf) {
 var checksum = function(checkdata){
 	var squaresum = Math.pow(checkdata.x,2)+Math.pow(checkdata.y,2)+Math.pow(checkdata.z,2)+Math.pow(checkdata.w,2);
 	var checksumerr = Math.abs(squaresum-1);
-	console.log("err:",checksumerr);
-	if(checksumerr>1.04) {
+	if(checksumerr>0.04) {
 		return false;
 	} else {
 		return true;
