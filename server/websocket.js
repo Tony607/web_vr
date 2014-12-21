@@ -185,7 +185,8 @@ var handleSerialComm = function (bytes_array) {
 	if(debug_mode){
 		var robot_pitch = controls.calculateRobotPitchAngle();
 		var cmd_throttle = serial_buf[3]-127;
-		var sendPack = {throttle:cmd_throttle, angle: robot_pitch, distance: robot_distance, controloutput: robot_control_output};
+		//var sendPack = {throttle:cmd_throttle, angle: robot_pitch, distance: robot_distance, controloutput: robot_control_output};
+		var sendPack = {throttle:bytes_array[0], angle: bytes_array[1], distance: bytes_array[2], controloutput: bytes_array[3]};
 		debugServer.sendMessage(sendPack);
 	}
 	if (arduinoPort && !arduinoPort.paused) {
