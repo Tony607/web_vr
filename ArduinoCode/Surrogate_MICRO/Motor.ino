@@ -69,9 +69,9 @@ ISR(TIMER3_COMPA_vect)
 		if (period_m[1][0]==ZERO_SPEED)
 			return;
 		if (dir_m[1])
-			SET(PORTB,5);   // DIR Motor 2
+			SET(PORTB,2);   // DIR Motor 2
 		else
-			CLR(PORTB,5);
+			CLR(PORTB,2);
 		period_m_index[1] = (period_m_index[1]+1)&0x07;
 		//delay_200ns();
 		SET(PORTB,4); // STEP Motor 2
@@ -196,4 +196,12 @@ bool getUpStateMachine(){
 		break;
 	}
 
+}
+/**
+function called to caluclate the throttle for obstacle avoidance
+It should be called in the main loop for about 50Hz no matter connected to host machine or not,
+It should firstly be called whenever new serial data throttle data comes
+*/
+void updateThrottle(unsigned char raw_throttle){
+	throttle = map(raw_throttle, 0,254, -MAX_THROTTLE,MAX_THROTTLE);
 }

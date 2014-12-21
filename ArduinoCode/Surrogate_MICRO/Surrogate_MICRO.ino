@@ -6,12 +6,6 @@
 // DMP is using the gyro_bias_no_motion correction method.
 // The board needs at least 10-15 seconds to give good values...
 
-// STEPPER MOTOR PINS
-// ENABLE PIN: D10
-// STEP Motor1: D6 -> PORTD,7//change to D4--> PORTD,4
-// DIR  Motor1: D7 -> PORTE,6
-// STEP Motor2: D8-> PORTB,4
-// DIR  Motor2: D9-> PORTB,5
 // To control the stepper motors we use Timer1 interrupt running at 25Khz. We control the speed of the motors
 
 
@@ -19,8 +13,13 @@
 // We have a P control for speed control and a PD control for stability (robot angle)
 // The output of the control (motor speed) is integrated so it´s really an acceleration
 
-#include "Config.h"
+#include "Config.h" 
+#ifdef USE_SONAR
 #include "RangeFinder.h"
+#endif 
+#ifdef HAS_PUSHUP_SERVO
+#include <PinNineServo.h>
+#endif
 #include <PwmServo.h>
 #include <Wire.h>
 #include <I2Cdev.h>
@@ -79,9 +78,6 @@
 #define WALK_DISTANCE_MIN 76
 
 
-int16_t pushUp_counter;  // for pushUp functionality (experimental)
-
-
 // MPU control/status vars
 bool dmpReady = false;  // set true if DMP init was successful
 uint8_t mpuIntStatus;   // holds actual interrupt status byte from MPU
@@ -110,10 +106,13 @@ PwmServo cameraServos;
 unsigned char servoAngle[3];
 unsigned char throttle_temp;
 unsigned char steering_temp;
+unsigned char pushup_temp;
 //those are variable used in the SerialDataParser.ino
 int inByte = 0;         // incoming serial byte
 unsigned char state = 0;
 bool hasNewSerialPack = false;
+//check if we need to calculate the throttle again
+bool needUpdateThrottle = true;
 //
 float angle_adjusted;
 float angle_adjusted_Old;
@@ -154,8 +153,6 @@ uint8_t period_m_index[2];    // index for subperiods
 
 void setup() 
 { 
-	// STEPPER PINS 
-	initializeRangeSensor();
 	pinMode(M_EN,OUTPUT);  // ENABLE MOTORS
 	pinMode(M1_STEP,OUTPUT);  // STEP MOTOR 1 PORTD,7
 	pinMode(M1_DIR,OUTPUT);  // DIR MOTOR 1
@@ -167,7 +164,11 @@ void setup()
 	digitalWrite(DEBUG,HIGH);   // Debug pin
 	//initialize the servos
 	cameraServos.init();
-
+	
+#ifdef HAS_PUSHUP_SERVO
+	Timer1.initialize();
+	Timer1.pwm(80);//0~1023
+#endif
 	SERIAL_PORT.begin(115200);
 	// Join I2C bus
 	Wire.begin();
@@ -222,7 +223,12 @@ void setup()
 	SERIAL_PORT.println(mpu.testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
 	timer_old = millis();
 	//setup the sonar range sensor to use Timer 1 capture
+#ifdef USE_SONAR
 	initializeRangeSensor();
+#endif
+#ifdef USE_IR
+	initializeIRSensor();
+#endif
 	//We are going to overwrite the Timer3 to use the stepper motors
 
 	// STEPPER MOTORS INITIALIZATION
@@ -344,10 +350,6 @@ void loop()
 		SERIAL_PORT.print(" ");SERIAL_PORT.println(target_angle);
 #endif
 
-
-		if (pushUp_counter>0)  // pushUp mode?
-			target_angle = 10;
-
 		// We integrate the output (acceleration)
 		control_output += stabilityPDControl(dt,angle_adjusted,target_angle,Kp,Kd);	
 		/*if(parse == PIDVAL){
@@ -371,7 +373,6 @@ void loop()
 			// NORMAL MODE
 			setMotorSpeed(0,motor1);
 			setMotorSpeed(1,motor2);
-			pushUp_counter=0;
 
 			if ((angle_adjusted<RISING_UP)&&(angle_adjusted>-RISING_UP))
 			{
@@ -402,8 +403,17 @@ void loop()
 		if (loop_counter >= 4) 
 		{
 			loop_counter = 0;
-			printRobotQuaternion();
+			printRobotQuaternionAndDistanceAndControlOutput();
+
+
+#ifdef USE_SONAR
 			toggleTrigPin();
+#endif
+			//update the throttle if the serial data coming slower thatn 50Hz/ or host machine is disconnected
+			/*if(needUpdateThrottle){
+			updateThrottle(throttle);
+			}
+			needUpdateThrottle = true;*/
 		} // Medium loop
 
 		if (slow_loop_counter>=20)  // 10Hz <= 200Hz/20

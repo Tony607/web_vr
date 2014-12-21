@@ -23,18 +23,3 @@ float dmpGetPhi() {
 	//return( asin(-2*(q.x * q.z - q.w * q.y)) * 180/M_PI); //roll
 	return (atan2(2*(q.y * q.z + q.w * q.x), q.w * q.w - q.x * q.x - q.y * q.y + q.z * q.z)* RAD2GRAD);
 }
-
-/**
-function to send the mpu quaternion to serial port 
-format: x,y,z,w,0xFF
-*/
-void printRobotQuaternion(){	
-	//bytes array to send to serial port
-	uint8_t bytesArray[5] = {0x00,0x00,0x00,0x00,0xFF};
-	//id = 0
-	bytesArray[0] = (uint8_t)((q.x+1)*127);
-	bytesArray[1] = (uint8_t)((q.y+1)*127);
-	bytesArray[2] = (uint8_t)((q.z+1)*127);
-	bytesArray[3] = (uint8_t)((q.w+1)*127);
-	SERIAL_PORT.write(bytesArray,5);
-}
