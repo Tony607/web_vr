@@ -8,7 +8,7 @@
 
 #include <Wire.h>
 #include <I2Cdev.h>
-#include <JJ_MPU6050_DMP_6Axis.h>  // Modified version of the library to work with DMP (see comments inside)
+#include <JJ_MPU6050_DMP_6Axis_50Hz.h>  // Modified version of the library to work with DMP (see comments inside)
 #include <RF24Network.h>
 #include <RF24.h>
 #include <SPI.h>

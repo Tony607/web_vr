@@ -29,7 +29,7 @@ void printQuaternion(){
 	bytesArray[2] = (uint8_t)((q.y+1)*127);
 	bytesArray[3] = (uint8_t)((q.z+1)*127);
 	bytesArray[4] = (uint8_t)((q.w+1)*127);
-	SERIAL_PORT.write(bytesArray,6);
+	Serial.write(bytesArray,6);
 }
 void printAnyQuaternion(Quaternion quternion, uint16_t addr){
 	uint8_t bytesArray[6] = {0x00,0x00,0x00,0x00,0x00,0xFF};
@@ -39,5 +39,5 @@ void printAnyQuaternion(Quaternion quternion, uint16_t addr){
 	bytesArray[2] = (uint8_t)((quternion.y+1)*127);
 	bytesArray[3] = (uint8_t)((quternion.z+1)*127);
 	bytesArray[4] = (uint8_t)((quternion.w+1)*127);
-	SERIAL_PORT.write(bytesArray,6);
+	Serial.write(bytesArray,6);
 }

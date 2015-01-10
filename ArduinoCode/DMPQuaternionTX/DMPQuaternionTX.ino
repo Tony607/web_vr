@@ -8,7 +8,7 @@
 
 #include <Wire.h>
 #include <I2Cdev.h>
-#include <JJ_MPU6050_DMP_6Axis.h>  // Modified version of the library to work with DMP (see comments inside)
+#include <JJ_MPU6050_DMP_6Axis_50Hz.h>  // Modified version of the library to work with DMP (see comments inside)
 #include <RF24Network.h>
 #include <RF24.h>
 #include <SPI.h>
@@ -19,8 +19,8 @@ RF24 radio(9,10);
 // Network uses that radio
 RF24Network network(radio);
 
-// Address of our node
-const uint16_t this_node = 2;
+// Address of our node, change it to match with your node number
+const uint16_t this_node = 1;
 
 // Address of the other node
 const uint16_t other_node = 0;
