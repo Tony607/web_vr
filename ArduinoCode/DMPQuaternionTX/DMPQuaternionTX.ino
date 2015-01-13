@@ -5,13 +5,14 @@
 // Angle calculations and control part is running at 200Hz from DMP solution
 // DMP is using the gyro_bias_no_motion correction method.
 // The board needs at least 10-15 seconds to give good values...
-
+#include "Config.h"
 #include <Wire.h>
 #include <I2Cdev.h>
 #include <JJ_MPU6050_DMP_6Axis_50Hz.h>  // Modified version of the library to work with DMP (see comments inside)
 #include <RF24Network.h>
 #include <RF24.h>
 #include <SPI.h>
+#include "QuaternionCompact.h"
 
 // nRF24L01(+) radio attached using Getting Started board 
 RF24 radio(9,10);
@@ -20,7 +21,7 @@ RF24 radio(9,10);
 RF24Network network(radio);
 
 // Address of our node, change it to match with your node number
-const uint16_t this_node = 1;
+const uint16_t this_node = THIS_NODE;
 
 // Address of the other node
 const uint16_t other_node = 0;
@@ -37,10 +38,9 @@ unsigned long packets_sent;
 // Structure of our payload
 struct payload_t
 {
-  uint16_t node_addr;
-  Quaternion dmp_quaternion;
+	uint16_t node_addr;
+	QuaternionCompact dmp_quaternion;
 };
-#define DEBUG 0
 
 #define CLR(x,y) (x&=(~(1<<y)))
 #define SET(x,y) (x|=(1<<y))
@@ -68,6 +68,12 @@ uint16_t packetSize;    // expected DMP packet size (for us 18 bytes)
 uint16_t fifoCount;     // count of all bytes currently in FIFO
 uint8_t fifoBuffer[18]; // FIFO storage buffer
 Quaternion q;
+//Record the last compact quaternion representation
+QuaternionCompact q_compact_his;
+#ifdef HASGLOVE
+//a fake Quaternion that use to contain Glove data
+Quaternion handQ;
+#endif
 
 uint8_t loop_counter;       // To generate a medium loop 40Hz 
 float dt;
@@ -129,12 +135,15 @@ void setup()
 	dmpSetSensorFusionAccelGain(0x20);
 	delay(1000);
 	mpu.resetFIFO();
-	
+
 	/**RF24 setup*/
 	Serial.println("RF24Network/examples/helloworld_tx/");
 	SPI.begin();
 	radio.begin();
 	network.begin(/*channel*/ 90, /*node address*/ this_node);
+#ifdef HASGLOVE	
+	glovePinSetUp();
+#endif
 }
 
 
@@ -149,16 +158,26 @@ void loop()
 	if ( now - last_sent >= interval  )
 	{
 		last_sent = now;
-
+#ifdef DEBUG
 		Serial.print("Sending...");
-		payload_t payload = { this_node, q };
-		RF24NetworkHeader header(/*to node*/ other_node);
-		bool ok = network.write(header,&payload,sizeof(payload));
-		if (ok)
-			Serial.println("ok.");
-		else
-			Serial.println("failed.");
+#endif
+		QuaternionCompact q_compact = QuaternionCompact(q);
+		if(!q_compact_his.isEqualTo(q_compact)){
+			q_compact_his = q_compact;
+			payload_t payload = { this_node, q_compact };
+			RF24NetworkHeader header(/*to node*/ other_node);
+			bool ok = network.write(header,&payload,sizeof(payload));
+#ifdef DEBUG
+			if (ok)
+				Serial.println("ok.");
+			else
+				Serial.println("failed.");
+#endif
+		}
 	}
+#ifdef HASGLOVE
+	gloveNodeSend();
+#endif
 	// New DMP Orientation solution?
 	fifoCount = mpu.getFIFOCount();
 	if (fifoCount>=18)
@@ -179,3 +198,61 @@ void loop()
 		} // Medium loop
 	}
 }
+/**
+Funtion that read the GPIO/Analog pin value connected to the glove and send the
+result to the master node as a virtual node, the virtual node address is defined
+in the Config.h file as GLOVE_NODE
+*/
+#ifdef HASGLOVE
+
+void glovePinSetUp(){
+	//set pullup on analog pins
+	digitalWrite(FLEX_PIN, HIGH);
+	digitalWrite(INDEX_FINGER, HIGH);
+	digitalWrite(MIDDLE_FINGER, HIGH);
+	digitalWrite(RING_FINGER, HIGH);
+	digitalWrite(SMALL_FINGER, HIGH);
+}
+
+void gloveNodeSend(){
+	unsigned char arrX[4] = { 0x00, 0x00, 0x00, 0x00};
+
+	int flexPinValue = analogRead(FLEX_PIN);
+	//TODO: map the value into a byte(0~255)
+	//Need to get the actual value range
+	flexPinValue = constrain(flexPinValue, FLEX_MIN_AD, FLEX_MAX_AD);
+	//first byte contain the flex sensor data
+	//we are not using 255 because the Master will send the data directly through
+	//the serial port, and the 0xFF is reserved for the end sign for a node frame
+	arrX[0]= map(flexPinValue, FLEX_MIN_AD, FLEX_MAX_AD, 0, 254);
+	if(digitalRead(INDEX_FINGER)==LOW){
+		SET(arrX[1],0);
+	}
+	if(digitalRead(MIDDLE_FINGER)==LOW){
+		SET(arrX[1],1);
+	}
+	if(digitalRead(RING_FINGER)==LOW){
+		SET(arrX[1],2);
+	}
+	if(digitalRead(SMALL_FINGER)==LOW){
+		SET(arrX[1],3);
+	}
+
+	//we only use the x in the Quaternion to contain 4 bytes of data
+	memcpy(&handQ.x, arrX,  4 );
+#ifdef DEBUG
+	Serial.print("Sending Glove");
+#endif
+	payload_t payload = { GLOVE_NODE, handQ };
+	RF24NetworkHeader header(/*to node*/ other_node);
+	bool ok = network.write(header,&payload,sizeof(payload));
+	if (ok)
+#ifdef DEBUG
+		Serial.println("ok.");
+#endif
+	else
+#ifdef DEBUG
+		Serial.println("failed.");
+#endif
+}
+#endif

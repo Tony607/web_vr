@@ -6,12 +6,14 @@
 // DMP is using the gyro_bias_no_motion correction method.
 // The board needs at least 10-15 seconds to give good values...
 
+#include "Config.h"
 #include <Wire.h>
 #include <I2Cdev.h>
 #include <JJ_MPU6050_DMP_6Axis_50Hz.h>  // Modified version of the library to work with DMP (see comments inside)
 #include <RF24Network.h>
 #include <RF24.h>
 #include <SPI.h>
+#include "QuaternionCompact.h"
 
 // nRF24L01(+) radio attached using Getting Started board 
 RF24 radio(9,10);
@@ -34,7 +36,7 @@ unsigned long last_sent;
 struct payload_t
 {
   uint16_t node_addr;
-  Quaternion dmp_quaternion;
+  QuaternionCompact dmp_quaternion;
 };
 
 #define DEBUG 0
@@ -65,6 +67,8 @@ uint16_t packetSize;    // expected DMP packet size (for us 18 bytes)
 uint16_t fifoCount;     // count of all bytes currently in FIFO
 uint8_t fifoBuffer[18]; // FIFO storage buffer
 Quaternion q;
+//Record the last compact quaternion representation
+QuaternionCompact q_compact_his;
 
 float dt;
 
@@ -149,7 +153,13 @@ void loop()
 		network.read(header,&payload,sizeof(payload));
 		//Serial.print("Received packet>");
 		//Serial.print(payload.node_addr);
-		printAnyQuaternion(payload.dmp_quaternion, payload.node_addr);
+		//if the node is a IMU node
+		if(payload.node_addr<MAX_IMU_NODE){
+			printAnyQuaternion(payload.dmp_quaternion, payload.node_addr);
+		} else {//other wise it is a special node, ie. glove node, where the quaternion is just a container for special data
+			printGloveNode(payload.dmp_quaternion, payload.node_addr);
+		}
+		
 	}
 	unsigned long now = millis();
 	if ( now - last_sent >= interval  )

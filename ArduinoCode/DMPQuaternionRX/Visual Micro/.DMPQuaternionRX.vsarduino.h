@@ -41,5 +41,7 @@ extern "C" void __cxa_pure_virtual() {;}
 #include "C:\Program Files (x86)\Arduino\hardware\arduino\avr\cores\arduino\arduino.h"
 #include "C:\Program Files (x86)\Arduino\hardware\arduino\avr\variants\eightanaloginputs\pins_arduino.h" 
 #include "C:\MyFolder\Arduino\MySketchBook\DMPQuaternionRX\DMPQuaternionRX.ino"
+#include "C:\MyFolder\Arduino\MySketchBook\DMPQuaternionRX\Config.h"
+#include "C:\MyFolder\Arduino\MySketchBook\DMPQuaternionRX\QuaternionCompact.h"
 #include "C:\MyFolder\Arduino\MySketchBook\DMPQuaternionRX\Sensor.ino"
 #endif

@@ -18,6 +18,9 @@
     <ClInclude Include="Visual Micro\.DMPQuaternionTX.vsarduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="DMPQuaternionTX.ino" />
