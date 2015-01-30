@@ -21,9 +21,13 @@
     <ClInclude Include="Config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="QuaternionCompact.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="DMPQuaternionTX.ino" />
     <None Include="Sensor.ino" />
+    <None Include="GloveManager.ino" />
   </ItemGroup>
 </Project>

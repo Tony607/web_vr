@@ -72,7 +72,10 @@ Quaternion q;
 QuaternionCompact q_compact_his;
 #ifdef HASGLOVE
 //a fake Quaternion that use to contain Glove data
-Quaternion handQ;
+QuaternionCompact handQ;
+//a fake Quaternion that use to contain Glove data history
+QuaternionCompact handQ_his;
+
 #endif
 
 uint8_t loop_counter;       // To generate a medium loop 40Hz 
@@ -198,61 +201,3 @@ void loop()
 		} // Medium loop
 	}
 }
-/**
-Funtion that read the GPIO/Analog pin value connected to the glove and send the
-result to the master node as a virtual node, the virtual node address is defined
-in the Config.h file as GLOVE_NODE
-*/
-#ifdef HASGLOVE
-
-void glovePinSetUp(){
-	//set pullup on analog pins
-	digitalWrite(FLEX_PIN, HIGH);
-	digitalWrite(INDEX_FINGER, HIGH);
-	digitalWrite(MIDDLE_FINGER, HIGH);
-	digitalWrite(RING_FINGER, HIGH);
-	digitalWrite(SMALL_FINGER, HIGH);
-}
-
-void gloveNodeSend(){
-	unsigned char arrX[4] = { 0x00, 0x00, 0x00, 0x00};
-
-	int flexPinValue = analogRead(FLEX_PIN);
-	//TODO: map the value into a byte(0~255)
-	//Need to get the actual value range
-	flexPinValue = constrain(flexPinValue, FLEX_MIN_AD, FLEX_MAX_AD);
-	//first byte contain the flex sensor data
-	//we are not using 255 because the Master will send the data directly through
-	//the serial port, and the 0xFF is reserved for the end sign for a node frame
-	arrX[0]= map(flexPinValue, FLEX_MIN_AD, FLEX_MAX_AD, 0, 254);
-	if(digitalRead(INDEX_FINGER)==LOW){
-		SET(arrX[1],0);
-	}
-	if(digitalRead(MIDDLE_FINGER)==LOW){
-		SET(arrX[1],1);
-	}
-	if(digitalRead(RING_FINGER)==LOW){
-		SET(arrX[1],2);
-	}
-	if(digitalRead(SMALL_FINGER)==LOW){
-		SET(arrX[1],3);
-	}
-
-	//we only use the x in the Quaternion to contain 4 bytes of data
-	memcpy(&handQ.x, arrX,  4 );
-#ifdef DEBUG
-	Serial.print("Sending Glove");
-#endif
-	payload_t payload = { GLOVE_NODE, handQ };
-	RF24NetworkHeader header(/*to node*/ other_node);
-	bool ok = network.write(header,&payload,sizeof(payload));
-	if (ok)
-#ifdef DEBUG
-		Serial.println("ok.");
-#endif
-	else
-#ifdef DEBUG
-		Serial.println("failed.");
-#endif
-}
-#endif

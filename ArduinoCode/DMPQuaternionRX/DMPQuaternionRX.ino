@@ -154,11 +154,8 @@ void loop()
 		//Serial.print("Received packet>");
 		//Serial.print(payload.node_addr);
 		//if the node is a IMU node
-		if(payload.node_addr<MAX_IMU_NODE){
-			printAnyQuaternion(payload.dmp_quaternion, payload.node_addr);
-		} else {//other wise it is a special node, ie. glove node, where the quaternion is just a container for special data
-			printGloveNode(payload.dmp_quaternion, payload.node_addr);
-		}
+		printAnyQuaternion(payload.dmp_quaternion, payload.node_addr);
+		
 		
 	}
 	unsigned long now = millis();

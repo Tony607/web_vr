@@ -40,9 +40,9 @@ typedef unsigned char byte;
 extern "C" void __cxa_pure_virtual() {;}
 #include "C:\Program Files (x86)\Arduino\hardware\arduino\avr\cores\arduino\arduino.h"
 #include "C:\Program Files (x86)\Arduino\hardware\arduino\avr\variants\eightanaloginputs\pins_arduino.h" 
-#include "C:\MyFolder\Arduino\MySketchBook\DMPQuaternionTX\DMPQuaternionTX.ino"
-#include "C:\MyFolder\Arduino\MySketchBook\DMPQuaternionTX\Config.h"
-#include "C:\MyFolder\Arduino\MySketchBook\DMPQuaternionTX\GloveManager.ino"
-#include "C:\MyFolder\Arduino\MySketchBook\DMPQuaternionTX\QuaternionCompact.h"
-#include "C:\MyFolder\Arduino\MySketchBook\DMPQuaternionTX\Sensor.ino"
+#include "C:\MyFolder\Arduino\MySketchBook\WiiChuckTX\WiiChuckTX.ino"
+#include "C:\MyFolder\Arduino\MySketchBook\WiiChuckTX\Config.h"
+#include "C:\MyFolder\Arduino\MySketchBook\WiiChuckTX\JoyAxis.h"
+#include "C:\MyFolder\Arduino\MySketchBook\WiiChuckTX\QuaternionCompact.h"
+#include "C:\MyFolder\Arduino\MySketchBook\WiiChuckTX\WiiManager.h"
 #endif
