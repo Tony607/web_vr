@@ -1,9 +1,9 @@
 //Uncomment this is the node is connected to the glove controller, will will send additional data to
-//#define HASGLOVE
+#define HASGLOVE
 //Uncomment this to enable Serial port to print out debug info
 //#define DEBUG
 //The address of this node
-#define THIS_NODE 3
+#define THIS_NODE 2
 
 #ifdef HASGLOVE
 //the old bread board has external pullup resistor for A6, A7, both 22 KOhm
@@ -41,8 +41,8 @@
 #define FLEX_MAX_AD 820//800 for 20k internal pullup
 #define FLEX_MIN_AD 520//420 for 20k internal pullup
 //The AD pin is connect to a GPIO pin with pullup res enabled
-#define FLEX_PULLUP_GPIO 7
-#define INDEX_PULLUP_GPIO 6
+#define FLEX_PULLUP_GPIO 1 //D1(TX)<-->A6
+#define INDEX_PULLUP_GPIO 0 //D0(RX)<-->A7
 #endif
 
 #endif

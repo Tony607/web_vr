@@ -89,15 +89,19 @@ MPU6050 mpu;
 
 void setup() 
 { 
+#ifdef DEBUG
 	Serial.begin(115200);
+#endif
 	// Join I2C bus
 	Wire.begin();
 	// 4000Khz fast mode
 	TWSR = 0;
 	TWBR = ((F_CPU/I2C_SPEED)-16)/2;
 	TWCR = 1<<TWEN;
-
+	
+#ifdef DEBUG
 	Serial.println("Initializing I2C devices...");
+#endif
 	//mpu.initialize();
 	mpu.setClockSource(MPU6050_CLOCK_PLL_ZGYRO);
 	mpu.setFullScaleGyroRange(MPU6050_GYRO_FS_2000);
@@ -107,11 +111,15 @@ void setup()
 	mpu.setSleepEnabled(false);
 
 	delay(2000);
+#ifdef DEBUG
 	Serial.println(F("Initializing DMP..."));
+#endif
 	devStatus = mpu.dmpInitialize();
 	if (devStatus == 0) {
 		// turn on the DMP, now that it's ready
+#ifdef DEBUG
 		Serial.println(F("Enabling DMP..."));
+#endif
 		mpu.setDMPEnabled(true);
 		mpuIntStatus = mpu.getIntStatus();
 		dmpReady = true;
@@ -120,9 +128,11 @@ void setup()
 		// 1 = initial memory load failed
 		// 2 = DMP configuration updates failed
 		// (if it's going to break, usually the code will be 1)
+#ifdef DEBUG
 		Serial.print(F("DMP Initialization failed (code "));
 		Serial.print(devStatus);
 		Serial.println(F(")"));
+#endif
 	}
 
 	// Gyro calibration
@@ -130,17 +140,23 @@ void setup()
 	delay(15000);   // Time to settle things... the bias_from_no_motion algorithm needs some time to take effect and reset gyro bias.
 
 	// verify connection
+#ifdef DEBUG
 	Serial.println("Testing device connections...");
 	Serial.println(mpu.testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
+#endif
 	delay(2000);
 	//Adjust sensor fusion gain
+#ifdef DEBUG
 	Serial.println("Adjusting DMP sensor fusion gain...");
+#endif
 	dmpSetSensorFusionAccelGain(0x20);
 	delay(1000);
 	mpu.resetFIFO();
 
 	/**RF24 setup*/
+#ifdef DEBUG
 	Serial.println("RF24Network/examples/helloworld_tx/");
+#endif
 	SPI.begin();
 	radio.begin();
 	network.begin(/*channel*/ 90, /*node address*/ this_node);

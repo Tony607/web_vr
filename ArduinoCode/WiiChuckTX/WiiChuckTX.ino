@@ -43,6 +43,8 @@ QuaternionCompact wiiQ;
 //a fake Quaternion that use to contain wii chuck data history
 QuaternionCompact wiiQ_his;
 
+//Left redundant frames counter
+unsigned char redundancy = 0;
 void setup() {
 	Serial.begin(115200);
 	delay(20);
@@ -52,6 +54,10 @@ void setup() {
 	network.begin(/*channel*/ 90, /*node address*/ this_node);
 	/**wii chuck setup*/
 	wiiManager.setup();
+#ifdef DEBUG
+	Serial.println("Setup done");
+#endif
+
 }
 
 void loop() {
@@ -64,10 +70,14 @@ void loop() {
 
 		wiiQ = QuaternionCompact();
 		wiiQ.x =wiiManager.getTheByte();
-		if(!wiiQ_his.isEqualTo(wiiQ)){
+		if((!wiiQ_his.isEqualTo(wiiQ))||redundancy>0){
 #ifdef DEBUG
-				Serial.println(wiiQ.x);
-#endif
+			Serial.println(wiiQ.x);
+#endif		
+			if((!wiiQ_his.isEqualTo(wiiQ))){
+				redundancy = MAX_REDUNANCY;
+			}
+			redundancy--;
 			wiiQ_his = wiiQ;
 			payload_t payload = { JOY_NODE_ID, wiiQ };
 			RF24NetworkHeader header(/*to node*/ other_node);
